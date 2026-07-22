@@ -59,6 +59,11 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+        <!-- SpringBoot参数校验依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
         <!--        spring-boot-starter-webmvc-test → 改成
           spring-boot-starter-test -->
         <dependency>
