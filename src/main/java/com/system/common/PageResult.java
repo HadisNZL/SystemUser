@@ -1,4 +1,23 @@
 package com.system.common;
 
-public class PageResult {
+import lombok.Data;
+
+import java.util.List;
+
+/**
+ * 封装分页工具类
+ *
+ * @param <T>
+ */
+@Data
+public class PageResult<T> {
+    private Long total;     // 总条数
+    private List<T> rows;    // 当前页数据
+
+    public static <T> PageResult<T> build(Long total, List<T> rows) {
+        PageResult<T> page = new PageResult<>();
+        page.setTotal(total);
+        page.setRows(rows);
+        return page;
+    }
 }

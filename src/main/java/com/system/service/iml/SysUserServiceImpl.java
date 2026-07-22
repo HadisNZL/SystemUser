@@ -1,5 +1,7 @@
 package com.system.service.iml;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.system.entity.SysUser;
 import com.system.mapper.SysUserMapper;
 import com.system.service.SysUserService;
@@ -15,7 +17,18 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Override
     public List<SysUser> findUserList() {
-        // 直接使用 MyBatis-Plus 自带的 selectList(null) 查询全部数据
-        return sysUserMapper.selectList(null);
+        // 只查询未删除数据
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysUser::getDeleteFlag, 0);
+        return sysUserMapper.selectList(wrapper);
+    }
+
+    @Override
+    public Page<SysUser> getUserPage(Integer pageNum, Integer pageSize) {
+        Page<SysUser> page = new Page<>(pageNum, pageSize);
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysUser::getDeleteFlag, 0);
+        // 自动分页、自动统计总条数
+        return sysUserMapper.selectPage(page, wrapper);
     }
 }
