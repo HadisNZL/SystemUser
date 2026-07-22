@@ -12,12 +12,12 @@ import java.util.List;
 @Data
 public class PageResult<T> {
     private Long total;     // 总条数
-    private List<T> rows;    // 当前页数据
+    private List<T> list;    // 当前页数据
 
-    public static <T> PageResult<T> build(Long total, List<T> rows) {
+    public static <T> PageResult<T> build(Long total, List<T> data) {
         PageResult<T> page = new PageResult<>();
         page.setTotal(total);
-        page.setRows(rows);
+        page.setList(data);
         return page;
     }
 }

@@ -1,6 +1,7 @@
 package com.system.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.system.common.PageResult;
 import com.system.common.Result;
 import com.system.entity.SysUser;
 import com.system.service.SysUserService;
@@ -24,10 +25,11 @@ public class SysUserController {
         List<SysUser> list = sysUserService.findUserList();
         return Result.success(list);
     }
+
     // MP分页接口
     @GetMapping("/page")
-    public Result<Page<SysUser>> userPage(@RequestParam(defaultValue = "1") Integer pageNum, @RequestParam(defaultValue = "5") Integer pageSize) {
-        Page<SysUser> page = sysUserService.getUserPage(pageNum, pageSize);
+    public Result<PageResult<SysUser>> userPage(@RequestParam(defaultValue = "1") Integer pageNum, @RequestParam(defaultValue = "5") Integer pageSize) {
+        PageResult<SysUser> page = sysUserService.getUserPage(pageNum, pageSize);
         return Result.success(page);
     }
 }
