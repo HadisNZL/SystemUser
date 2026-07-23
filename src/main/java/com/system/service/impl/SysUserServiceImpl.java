@@ -3,14 +3,17 @@ package com.system.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.system.common.PageResult;
+import com.system.convert.UserConvert;
 import com.system.dto.UserSearchDTO;
 import com.system.entity.SysUser;
 import com.system.mapper.SysUserMapper;
 import com.system.service.SysUserService;
+import com.system.vo.UserPageVO;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * LambdaQueryWrapper用法
@@ -36,6 +39,9 @@ public class SysUserServiceImpl implements SysUserService {
     @Resource
     private SysUserMapper sysUserMapper;
 
+    @Resource
+    private UserConvert userConvert;
+
     @Override
     public List<SysUser> findUserList() {
         // 只查询未删除数据
@@ -59,14 +65,9 @@ public class SysUserServiceImpl implements SysUserService {
 
     /**
      * LambdaQueryWrapper用法
-     *
-     * @param dto
-     * @param pageNum
-     * @param pageSize
-     * @return
      */
     @Override
-    public PageResult<SysUser> searchUserPage(UserSearchDTO dto, Integer pageNum, Integer pageSize) {
+    public PageResult<UserPageVO> searchUserPage(UserSearchDTO dto, Integer pageNum, Integer pageSize) {
         Page<SysUser> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         // 1.账号模糊查询 不为空才拼接条件
@@ -79,7 +80,20 @@ public class SysUserServiceImpl implements SysUserService {
         // 4.默认按创建时间倒序
         wrapper.orderByDesc(SysUser::getCreateTime);
         Page<SysUser> userPage = sysUserMapper.selectPage(page, wrapper);
-        return PageResult.build(userPage.getTotal(), userPage.getRecords());
+
+        // 实体转VO
+        // 使用 Stream 流配合 MapStruct 一行代码完成转换
+        List<UserPageVO> voList = userPage.getRecords().stream()
+                .map(userConvert::convert)
+                .collect(Collectors.toList());
+
+//        Page<UserPageVO> voPage = new Page<>();
+//        voPage.setTotal(userPage.getTotal());
+//        voPage.setCurrent(userPage.getCurrent());
+//        voPage.setSize(userPage.getSize());
+//        voPage.setRecords(voList);
+
+        return PageResult.build(userPage.getTotal(), voList);
     }
 
     @Override

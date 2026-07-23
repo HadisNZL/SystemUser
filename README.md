@@ -12,6 +12,7 @@
 - **Spring Validation** - 参数校验依赖
 - **Jackson** - JSON 序列化 / 反序列化
 - **Lombok** - 简化实体类与 DTO/VO 代码
+- **MapStruct 1.5.5.Final** - 在编译期完成 Entity 与 VO 的类型安全转换
 - **HikariCP** - 数据库连接池
 - **JDK 17** - 开发环境
 
@@ -51,7 +52,8 @@
 ### 分层与对象设计
 - ✅ `entity` 实体类
 - ✅ `dto` 入参对象
-- ✅ `vo` 出参对象（已创建，后续可逐步替代直接返回实体）
+- ✅ `vo` 出参对象，条件分页接口不再直接返回实体
+- ✅ `convert` 对象转换层，通过 MapStruct 完成 `SysUser` 到 `UserPageVO` 的转换
 - ✅ `common` 通用返回与异常类
 - ✅ `handler` 自动填充处理器
 
@@ -72,6 +74,7 @@ com.system
 ├── entity                        数据库实体类
 ├── dto                           入参传输对象
 ├── vo                            出参视图对象
+├── convert                       Entity / VO 对象转换层
 ├── common                        公共返回类、异常类
 ├── handler                       MyBatis-Plus 自动填充处理器
 ```
@@ -96,6 +99,8 @@ src/main/java/com/system/
 │   └── MyBatisPlusConfig.java
 ├── controller/
 │   └── SysUserController.java
+├── convert/
+│   └── UserConvert.java
 ├── dto/
 │   └── UserSearchDTO.java
 ├── entity/
@@ -258,6 +263,8 @@ public class UserSearchDTO {
 }
 ```
 
+接口分页记录返回 `UserPageVO`，仅包含页面需要的用户字段，不返回密码、邮箱、更新时间和删除标记等实体字段。`SysUser` 到 `UserPageVO` 的转换由 MapStruct 在编译期生成实现。
+
 ### 6.4 新增用户
 
 ```http
@@ -387,12 +394,13 @@ yyyy-MM-dd HH:mm:ss
 
 ### 9.2 DTO / VO 分离趋势
 
-目前你已经开始往更规范的接口设计走：
+目前查询入参与分页出参已经完成 DTO / VO 分离：
 
 - `UserSearchDTO`：负责接收查询参数
 - `UserPageVO`：负责定义页面输出对象
+- `UserConvert`：负责将 `SysUser` 转换为 `UserPageVO`
 
-虽然当前分页接口还主要返回 `SysUser`，但 `VO` 已经建好，后续可以逐步改成“返回 VO，不直接暴露实体”。这属于很好的演进方向。
+条件分页接口 `/sys/user/search_list` 已返回 `PageResult<UserPageVO>`，避免直接暴露数据库实体及密码等敏感字段。其他仍返回实体的查询接口可以后续按相同方式迁移。
 
 ### 9.3 查询写法
 
@@ -517,6 +525,13 @@ MyBatis-Plus 会自动拼接逻辑删除条件。
 ---
 
 ## 13. 更新日志
+
+### v0.0.4
+- ✨ 集成 MapStruct，并配置 Lombok 兼容的注解处理器
+- ✨ 新增 `UserConvert`，在编译期生成 `SysUser` 到 `UserPageVO` 的转换实现
+- ♻️ 条件分页查询改为返回 `PageResult<UserPageVO>`
+- 🔒 分页结果不再暴露密码、邮箱、更新时间和删除标记等实体字段
+- 📝 README 同步更新技术栈、项目结构与接口返回说明
 
 ### v0.0.3
 - ✨ 新增条件分页查询 DTO：`UserSearchDTO`

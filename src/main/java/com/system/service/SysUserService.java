@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.system.common.PageResult;
 import com.system.dto.UserSearchDTO;
 import com.system.entity.SysUser;
+import com.system.vo.UserPageVO;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ public interface SysUserService {
     PageResult<SysUser> getUserPage(Integer pageNum, Integer pageSize);
 
     //  多条件查询
-    PageResult<SysUser> searchUserPage(UserSearchDTO dto, Integer pageNum, Integer pageSize);
+    PageResult<UserPageVO> searchUserPage(UserSearchDTO dto, Integer pageNum, Integer pageSize);
 
     // 插入一条数据
 
