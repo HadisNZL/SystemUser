@@ -67,7 +67,7 @@ com.system
 ├── config                        所有配置类：跨域、MP、时间序列化
 ├── controller                    控制层接口
 ├── service                       业务接口层
-│   └── iml                       业务实现层（当前代码目录名为 iml）
+│   └── impl                       业务实现层（当前代码目录名为 impl）
 ├── mapper                        数据持久层
 ├── entity                        数据库实体类
 ├── dto                           入参传输对象
@@ -106,7 +106,7 @@ src/main/java/com/system/
 │   └── SysUserMapper.java
 ├── service/
 │   ├── SysUserService.java
-│   └── iml/
+│   └── impl/
 │       └── SysUserServiceImpl.java
 └── vo/
     └── UserPageVO.java
