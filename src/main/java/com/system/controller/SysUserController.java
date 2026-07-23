@@ -2,6 +2,7 @@ package com.system.controller;
 
 import com.system.common.PageResult;
 import com.system.common.Result;
+import com.system.dto.UserSearchDTO;
 import com.system.entity.SysUser;
 import com.system.service.SysUserService;
 import jakarta.annotation.Resource;
@@ -26,6 +27,14 @@ public class SysUserController {
     @GetMapping("/page")
     public Result<PageResult<SysUser>> userPage(@RequestParam(defaultValue = "1") Integer pageNum, @RequestParam(defaultValue = "5") Integer pageSize) {
         PageResult<SysUser> page = sysUserService.getUserPage(pageNum, pageSize);
+        return Result.success(page);
+    }
+
+    // MP分页接口 关联LambdaQueryWrapper条件查询
+    //e.g.带dto任何字段都可以 GET http://localhost:8080/page?username=test&status=1&pageNum=2&pageSize=10
+    @GetMapping("/search_list")
+    public Result<PageResult<SysUser>> searchUserPage(UserSearchDTO dto, @RequestParam(defaultValue = "1") Integer pageNum, @RequestParam(defaultValue = "5") Integer pageSize) {
+        PageResult<SysUser> page = sysUserService.searchUserPage(dto, pageNum, pageSize);
         return Result.success(page);
     }
 

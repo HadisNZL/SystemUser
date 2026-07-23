@@ -59,7 +59,9 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
         <!-- SpringBoot参数校验依赖 -->
+        <!-- JSR380 新版参数校验，告别手写非空判断-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>

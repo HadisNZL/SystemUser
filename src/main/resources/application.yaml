@@ -1,15 +1,26 @@
-server:
-  port: 8080
-
 spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/admin_system?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true
-    username: root
-    password: 123456
+  application:
+    name: admin-system
+  profiles:
+    active: dev  # 默认激活开发环境
 
-# MyBatis-Plus 专属配置
+  # 全局 Jackson 序列化与时间配置（所有环境通用）
+  #效果同代码com.system.config/JacksonConfig.java配置一样（推荐，支持 LocalDateTime）
+#  jackson:
+#    date-format: yyyy-MM-dd HH:mm:ss
+#    time-zone: GMT+8
+#    serialization:
+#      write-dates-as-timestamps: false
+
+# MyBatis-Plus 全局公共配置
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true # 开启驼峰命名自动转换 (create_time -> createTime)
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl # 打印 SQL 日志，方便调试
+  global-config: # 配了这三行之后，你的全系统就统一了规则：0 代表活着的正常数据，1 代表被删除了的数据。以后写代码时，你完全不用手动去管这个字段，MP 会自动在后台帮你过滤和维护！,配合@TableLogic 注解使用
+    db-config:
+      # 逻辑删除字段名
+      logic-delete-field: deleteFlag
+      # 未删除值
+      logic-not-delete-value: 0
+      # 已删除值
+      logic-delete-value: 1
