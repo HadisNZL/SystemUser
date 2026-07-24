@@ -13,6 +13,7 @@ public class UserPageVO {
     private String username;
     private String nickname;
     private String phone;
+    private String email;
     private Integer status;
     private LocalDateTime createTime;
 }

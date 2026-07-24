@@ -24,18 +24,11 @@ public class SysUserController {
         return Result.success(list);
     }
 
-    // MP分页接口
-    @GetMapping("/page")
-    public Result<PageResult<SysUser>> userPage(@RequestParam(defaultValue = "1") Integer pageNum, @RequestParam(defaultValue = "5") Integer pageSize) {
-        PageResult<SysUser> page = sysUserService.getUserPage(pageNum, pageSize);
-        return Result.success(page);
-    }
-
     // MP分页接口 关联LambdaQueryWrapper条件查询
     //e.g.带dto任何字段都可以 GET http://localhost:8080/page?username=test&status=1&pageNum=2&pageSize=10
     @GetMapping("/search_list")
-    public Result<PageResult<UserPageVO>> searchUserPage(UserSearchDTO dto, @RequestParam(defaultValue = "1") Integer pageNum, @RequestParam(defaultValue = "5") Integer pageSize) {
-        PageResult<UserPageVO> page = sysUserService.searchUserPage(dto, pageNum, pageSize);
+    public Result<PageResult<UserPageVO>> getUser(UserSearchDTO dto, @RequestParam(defaultValue = "1") Integer pageNum, @RequestParam(defaultValue = "5") Integer pageSize) {
+        PageResult<UserPageVO> page = sysUserService.getUserPage(dto, pageNum, pageSize);
         return Result.success(page);
     }
 
@@ -47,7 +40,7 @@ public class SysUserController {
     //    "email": "tonglin@qq.com"
     //}
     @PostMapping("/add")
-    public Result<String> addUser(@RequestBody SysUser user) {
+    public Result<String> addUser(@RequestBody UserPageVO user) {
         boolean success = sysUserService.saveUser(user);
         if (success) {
             return Result.success("新增用户成功");
@@ -56,14 +49,23 @@ public class SysUserController {
         }
     }
 
-    // 前端通过 DELETE 方式请求，例如：/sys/user/delete/1
+    /**
+     * 删除，根据有没有注解@TableLogic标识 ，MyBatis-Plus底层判断是逻辑删除还是物理删除
+     * 请求示例：DELETE /sys/user/delete/1
+     */
     @DeleteMapping("/delete/{id}")
     public Result<String> deleteUser(@PathVariable Long id) {
-        boolean success = sysUserService.deleteUserById(id);
-        if (success) {
-            return Result.success("删除用户成功");
-        } else {
-            return Result.fail("删除用户失败，ID可能不存在");
-        }
+        boolean success = sysUserService.deleteUser(id);
+        return success ? Result.success("删除用户成功") : Result.fail("删除用户失败，ID可能不存在");
+    }
+
+    /**
+     * 管理员临时 物理删除，不要外泄
+     * 请求示例：DELETE /sys/user/delete_admin/1
+     */
+    @DeleteMapping("/delete_admin/{id}")
+    public Result<Boolean> adminPhysicalDeleteUser(@PathVariable Long id) {
+        boolean success = sysUserService.adminPhysicalDeleteUser(id);
+        return success ? Result.success(true) : Result.fail("管理员临时 物理删除失败");
     }
 }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 根节点必须是 mapper，namespace 指向你的 Java 接口全限定名 -->
+<mapper namespace="com.system.mapper.SysUserMapper">
+
+    <!-- 你的物理删除方法写在里面 -->
+    <delete id="physicalDeleteById">
+        DELETE FROM sys_user WHERE id = #{id}
+    </delete>
+
+</mapper>
