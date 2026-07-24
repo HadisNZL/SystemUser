@@ -18,6 +18,9 @@ public interface SysUserService {
 
     boolean saveUser(UserPageVO user);
 
+    //编辑一条数据
+    boolean editUser(UserPageVO user);
+
     /**
      * 删除一条数据
      * MyBatis-Plus操作 deleteById(id)

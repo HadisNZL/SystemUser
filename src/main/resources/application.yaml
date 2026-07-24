@@ -15,6 +15,8 @@ spring:
 # MyBatis-Plus 全局公共配置
 mybatis-plus:
   configuration:
+    # 开启乐观锁
+    optimistic-locker: true
     map-underscore-to-camel-case: true # 开启驼峰命名自动转换 (create_time -> createTime)
   global-config: # 配了这三行之后，你的全系统就统一了规则：0 代表活着的正常数据，1 代表被删除了的数据。以后写代码时，你完全不用手动去管这个字段，MP 会自动在后台帮你过滤和维护！,配合@TableLogic 注解使用
     db-config:

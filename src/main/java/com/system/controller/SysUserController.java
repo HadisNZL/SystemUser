@@ -49,6 +49,17 @@ public class SysUserController {
         }
     }
 
+    //修改
+    @PostMapping("/modify")
+    public Result<Boolean> editUser(@RequestBody UserPageVO userPageVO) {
+        boolean success = sysUserService.editUser(userPageVO);
+        if (success) {
+            return Result.success(true);
+        } else {
+            return Result.fail("数据已被其他人修改或并发冲突，请刷新后重试");
+        }
+    }
+
     /**
      * 删除，根据有没有注解@TableLogic标识 ，MyBatis-Plus底层判断是逻辑删除还是物理删除
      * 请求示例：DELETE /sys/user/delete/1

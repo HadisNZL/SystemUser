@@ -93,7 +93,29 @@ public class SysUserServiceImpl implements SysUserService {
             user.setStatus(1);
         }
         // 执行插入，并判断受影响行数是否大于 0
+        //新增则version、createTime、updateTime、deleteFlag 全部自动填充，无需手动set
+        //也包括乐观锁
         int rows = sysUserMapper.insert(user);
+        return rows > 0;
+    }
+
+    @Override
+    public boolean editUser(UserPageVO userPageVO) {
+        if (userPageVO.getId() == null) {
+            return false;
+        }
+        // 1. 先查库，拿到当前最新version
+        SysUser dbUser = sysUserMapper.selectById(userPageVO.getId());
+        if (dbUser == null) {
+            return false;
+        }
+        // 2. 利用 MapStruct 直接合并：
+        // 会自动把 userPageVO 里不为 null 的字段覆盖到 dbUser 上，
+        // 同时完美保留了 dbUser 的 id、createTime 以及最重要的 version！
+        userConvert.updateEntityFromVO(userPageVO, dbUser);
+        // 3. 执行更新，MP 会自动带上 id 和 version 条件
+        int rows = sysUserMapper.updateById(dbUser);
+        // 更新行数为0 = 版本已变更，被别人抢先修改
         return rows > 0;
     }
 

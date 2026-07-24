@@ -38,7 +38,7 @@ public class Result<T> {
     // 失败
     public static <T> Result<T> fail(String msg) {
         Result<T> r = new Result<>();
-        r.isSuccess = true;
+        r.isSuccess = false;
         r.setCode(500);
         r.setMsg(msg);
         return r;

@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
  * 字段自动填充（必配企业功能）
  * e.g.
  * 对应实体类的
+ *
  * @TableField(fill = FieldFill.INSERT)
  * @TableField(fill = FieldFill.INSERT_UPDATE)
  */
@@ -26,6 +27,8 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
 
         // 逻辑删除标记（默认 0）
         this.strictInsertFill(metaObject, "deleteFlag", Integer.class, 0);
+        //  乐观锁
+        this.strictInsertFill(metaObject, "version", Integer.class, 1);
     }
 
     // 更新数据自动填充

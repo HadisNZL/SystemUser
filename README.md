@@ -1,6 +1,6 @@
 # Admin System
 
-一个基于 **Spring Boot 3.5.16 + MyBatis-Plus** 的后台管理系统练手项目，当前已完成用户列表、分页、条件查询、新增、删除，以及统一返回、全局异常、跨域、时间格式化、逻辑删除、自动填充等基础能力。
+一个基于 **Spring Boot 3.5.16 + MyBatis-Plus** 的后台管理系统练手项目，当前已完成用户列表、条件分页、新增、修改、逻辑删除和物理删除，以及统一返回、全局异常、跨域、时间格式化、自动填充、乐观锁等基础能力。
 
 ---
 
@@ -27,6 +27,7 @@
 - ✅ 用户分页查询
 - ✅ 用户条件分页查询
 - ✅ 新增用户
+- ✅ 修改用户
 - ✅ 删除用户
 
 ### 数据访问能力
@@ -35,6 +36,7 @@
 - ✅ 逻辑删除配置
 - ✅ 雪花算法主键 ID
 - ✅ 创建时间、更新时间、删除标记自动填充
+- ✅ 乐观锁版本号自动填充与并发更新保护
 
 ### 通用基础设施
 - ✅ 统一响应结果封装 `Result<T>`
@@ -160,6 +162,7 @@ CREATE TABLE `sys_user` (
   `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `delete_flag` tinyint DEFAULT '0' COMMENT '删除标记：0-未删除，1-已删除',
+  `version` int DEFAULT '1' COMMENT '乐观锁版本号',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统用户表';
@@ -228,17 +231,7 @@ spring:
 GET /sys/user/list
 ```
 
-### 6.2 分页查询用户
-
-```http
-GET /sys/user/page?pageNum=1&pageSize=5
-```
-
-请求参数：
-- `pageNum`：页码，默认 `1`
-- `pageSize`：每页条数，默认 `5`
-
-### 6.3 条件分页查询用户
+### 6.2 条件分页查询用户
 
 ```http
 GET /sys/user/search_list?username=test&status=1&pageNum=1&pageSize=10
@@ -263,9 +256,9 @@ public class UserSearchDTO {
 }
 ```
 
-接口分页记录返回 `UserPageVO`，仅包含页面需要的用户字段，不返回密码、邮箱、更新时间和删除标记等实体字段。`SysUser` 到 `UserPageVO` 的转换由 MapStruct 在编译期生成实现。
+接口分页记录返回 `UserPageVO`，包含 ID、用户名、昵称、手机号、邮箱、状态和创建时间，不返回密码、更新时间和删除标记等实体字段。`SysUser` 到 `UserPageVO` 的转换由 MapStruct 在编译期生成实现。
 
-### 6.4 新增用户
+### 6.3 新增用户
 
 ```http
 POST /sys/user/add
@@ -282,16 +275,38 @@ Content-Type: application/json
 说明：
 - 如果 `password` 为空，系统默认补 `123456`
 - 如果 `status` 为空，系统默认补 `1`
+- `version`、创建时间、更新时间和删除标记由 MyBatis-Plus 自动填充
 
-### 6.5 删除用户
+### 6.4 修改用户
+
+```http
+POST /sys/user/modify
+Content-Type: application/json
+
+{
+  "id": 1,
+  "nickname": "新昵称",
+  "email": "new@example.com"
+}
+```
+
+修改时忽略值为 `null` 的字段，并通过 MyBatis-Plus 乐观锁避免并发更新互相覆盖。
+
+### 6.5 逻辑删除用户
 
 ```http
 DELETE /sys/user/delete/{id}
 ```
 
-当前实现为：
-- **调用 `deleteById(id)` 删除**
-- 但项目实体与全局配置里已经接入了 **逻辑删除能力**
+实体字段使用了 `@TableLogic`，因此 `deleteById(id)` 实际更新删除标记，不会物理移除记录。
+
+### 6.6 管理员物理删除用户
+
+```http
+DELETE /sys/user/delete_admin/{id}
+```
+
+该接口通过 Mapper XML 执行 `DELETE FROM sys_user WHERE id = #{id}`，会永久移除记录，仅供受控管理场景使用。
 
 ---
 
@@ -390,6 +405,7 @@ yyyy-MM-dd HH:mm:ss
 `SysUser` 已具备：
 - 雪花算法主键：`IdType.ASSIGN_ID`
 - 逻辑删除：`@TableLogic`
+- 乐观锁：`@Version`
 - 创建 / 更新时间自动填充：`@TableField(fill = ...)`
 
 ### 9.2 DTO / VO 分离趋势
@@ -398,7 +414,7 @@ yyyy-MM-dd HH:mm:ss
 
 - `UserSearchDTO`：负责接收查询参数
 - `UserPageVO`：负责定义页面输出对象
-- `UserConvert`：负责将 `SysUser` 转换为 `UserPageVO`
+- `UserConvert`：负责双向转换，并在修改时忽略值为 `null` 的字段
 
 条件分页接口 `/sys/user/search_list` 已返回 `PageResult<UserPageVO>`，避免直接暴露数据库实体及密码等敏感字段。其他仍返回实体的查询接口可以后续按相同方式迁移。
 
@@ -525,6 +541,14 @@ MyBatis-Plus 会自动拼接逻辑删除条件。
 ---
 
 ## 13. 更新日志
+
+### v0.0.5
+- ✨ 新增用户修改接口 `/sys/user/modify`
+- ✨ 接入 MyBatis-Plus 乐观锁和 `version` 自动填充
+- ✨ MapStruct 支持 VO 转 Entity 及忽略空值的局部更新
+- ✨ 新增逻辑删除接口与管理员物理删除接口
+- 🐛 修正失败响应的 `isSuccess` 状态
+- 📝 同步更新数据库字段与 API 文档
 
 ### v0.0.4
 - ✨ 集成 MapStruct，并配置 Lombok 兼容的注解处理器
