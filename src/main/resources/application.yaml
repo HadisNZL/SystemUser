@@ -26,3 +26,8 @@ mybatis-plus:
       logic-not-delete-value: 0
       # 已删除值
       logic-delete-value: 1
+
+knife4j:
+  enable: true # 开启 Knife4j 增强功能
+  setting:
+    language: zh_cn # 界面语言设置为中文

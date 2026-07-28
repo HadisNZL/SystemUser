@@ -17,3 +17,7 @@ logging:
   level:
     root: info
     com.system: info
+
+#开发环境：开启文档
+knife4j:
+  production: false
