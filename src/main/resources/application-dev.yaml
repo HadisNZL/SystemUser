@@ -21,3 +21,9 @@ logging:
 #开发环境：开启文档
 knife4j:
   production: false
+
+jwt:
+  # 密钥 生产环境一定要更换长字符串，禁止明文硬编码在代码
+  secret: abc123456abc123456abc123456abc123456
+  # 过期时间 单位：秒 7200=2小时
+  expire: 7200

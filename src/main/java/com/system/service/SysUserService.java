@@ -1,7 +1,9 @@
 package com.system.service;
 
 import com.system.common.PageResult;
+import com.system.dto.UserAddDTO;
 import com.system.dto.UserSearchDTO;
+import com.system.dto.UserUpdateDTO;
 import com.system.entity.SysUser;
 import com.system.vo.UserPageVO;
 
@@ -16,10 +18,10 @@ public interface SysUserService {
 
     // 插入一条数据
 
-    boolean saveUser(UserPageVO user);
+    void saveUser(UserAddDTO user);
 
     //编辑一条数据
-    boolean editUser(UserPageVO user);
+    void editUser(UserUpdateDTO user);
 
     /**
      * 删除一条数据
@@ -33,10 +35,10 @@ public interface SysUserService {
      * 则 执行物理删除
      * MyBatis-Plus 认准了这就是个普通字段，它在底层生成的 SQL 就是硬碰硬的物理删除
      */
-    boolean deleteUser(Long id);
+    void deleteUser(Long id);
 
     /**
      * 管理员临时 物理删除，不要外泄
      */
-    boolean adminPhysicalDeleteUser(Long id);
+    void adminPhysicalDeleteUser(Long id);
 }

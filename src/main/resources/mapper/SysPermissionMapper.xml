@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 根节点必须是 mapper，namespace 指向你的 Java 接口全限定名 -->
+<mapper namespace="com.system.mapper.SysPermissionMapper">
+    <!--sys_user_role (用户-角色关联)
+           ↓ (通过 role_id)
+    sys_role_permission (角色-权限关联)
+           ↓ (通过 permission_id)
+    sys_permission (权限表) → 取出 permission_key-->
+    <select id="selectUserPermissionKeys" resultType="java.lang.String">
+        SELECT DISTINCT p.permission_key
+        FROM sys_permission p
+                 INNER JOIN sys_role_permission rp ON p.id = rp.permission_id
+                 INNER JOIN sys_user_role ur ON rp.role_id = ur.role_id
+        WHERE ur.user_id = #{userId}
+          AND p.delete_flag = 0
+    </select>
+</mapper>

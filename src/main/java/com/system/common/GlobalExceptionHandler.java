@@ -5,6 +5,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    // 捕获自定义业务异常
+    @ExceptionHandler(BusinessException.class)
+    public Result<?> businessExceptionHandler(BusinessException e) {
+        return Result.fail(e.getMessage());
+    }
+
     // 捕获所有未知异常
     @ExceptionHandler(Exception.class)
     public Result<?> error(Exception e) {

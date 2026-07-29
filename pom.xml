@@ -83,6 +83,34 @@
             <version>${knife4j.version}</version>
         </dependency>
 
+        <!-- jjwt SpringBoot3 jakarta 新版 -->
+        <!-- JWT API-->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.7</version>
+        </dependency>
+        <!--实现-->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.7</version>
+            <scope>runtime</scope>
+        </dependency>
+        <!--使用 Jackson 进行 JSON 序列化/反序列化-->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.7</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!--Spring Boot 官方提供的安全框架启动器-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
         <!--        spring-boot-starter-webmvc-test → 改成
           spring-boot-starter-test -->
         <dependency>

@@ -2,15 +2,21 @@ package com.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.system.common.BusinessException;
 import com.system.common.PageResult;
+import com.system.common.SystemConstants;
 import com.system.convert.UserConvert;
+import com.system.dto.UserAddDTO;
 import com.system.dto.UserSearchDTO;
+import com.system.dto.UserUpdateDTO;
 import com.system.entity.SysUser;
 import com.system.mapper.SysUserMapper;
 import com.system.service.SysUserService;
 import com.system.vo.UserPageVO;
 import jakarta.annotation.Resource;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,6 +48,9 @@ public class SysUserServiceImpl implements SysUserService {
     @Resource
     private UserConvert userConvert;
 
+    @Resource
+    private PasswordEncoder passwordEncoder;
+
     @Override
     public List<SysUser> findUserList() {
         // 只查询未删除数据
@@ -71,7 +80,7 @@ public class SysUserServiceImpl implements SysUserService {
 
         // 实体转VO
         // 使用 Stream 流配合 MapStruct 一行代码完成转换
-        List<UserPageVO> voList = userPage.getRecords().stream().map(userConvert::convert).collect(Collectors.toList());
+        List<UserPageVO> voList = userPage.getRecords().stream().map(userConvert::convertUserPageVO).collect(Collectors.toList());
 
 //        Page<UserPageVO> voPage = new Page<>();
 //        voPage.setTotal(userPage.getTotal());
@@ -83,40 +92,50 @@ public class SysUserServiceImpl implements SysUserService {
     }
 
     @Override
-    public boolean saveUser(UserPageVO userVO) {
+    @Transactional(rollbackFor = Exception.class)//事务保障原子性
+    public void saveUser(UserAddDTO dto) {
         // 1. 将前端的 VO/DTO 转换成数据库实体类 SysUser
-        SysUser user = userConvert.convert(userVO);
+        SysUser user = userConvert.convertUserAddDTO(dto);
+        // 建议：前端不传密码时业务抛出提示，不推荐后端硬编码默认密码
         if (user.getPassword() == null || user.getPassword().isEmpty()) {
-            user.setPassword("123456");
+            throw new BusinessException("密码不能为空");
         }
         if (user.getStatus() == null) {
-            user.setStatus(1);
+            user.setStatus(SystemConstants.USER_NORMAL);
         }
+        // Bcrypt加密存入数据库
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         // 执行插入，并判断受影响行数是否大于 0
         //新增则version、createTime、updateTime、deleteFlag 全部自动填充，无需手动set
         //也包括乐观锁
         int rows = sysUserMapper.insert(user);
-        return rows > 0;
+        if (rows <= 0) {
+            throw new BusinessException("新增用户失败");
+        }
     }
 
     @Override
-    public boolean editUser(UserPageVO userPageVO) {
-        if (userPageVO.getId() == null) {
-            return false;
+    @Transactional(rollbackFor = Exception.class)//事务保障原子性
+    public void editUser(UserUpdateDTO userUpdateDTO) {
+        if (userUpdateDTO.getId() == null) {
+            throw new BusinessException("用户ID不能为空");
         }
         // 1. 先查库，拿到当前最新version
-        SysUser dbUser = sysUserMapper.selectById(userPageVO.getId());
+        SysUser dbUser = sysUserMapper.selectById(userUpdateDTO.getId());
         if (dbUser == null) {
-            return false;
+            throw new BusinessException("用户不存在");
         }
         // 2. 利用 MapStruct 直接合并：
-        // 会自动把 userPageVO 里不为 null 的字段覆盖到 dbUser 上，
+        // 会自动把 userUpdateDTO 里不为 null 的字段覆盖到 dbUser 上，
         // 同时完美保留了 dbUser 的 id、createTime 以及最重要的 version！
-        userConvert.updateEntityFromVO(userPageVO, dbUser);
+        userConvert.updateEntityFromVO(userUpdateDTO, dbUser);
         // 3. 执行更新，MP 会自动带上 id 和 version 条件
         int rows = sysUserMapper.updateById(dbUser);
         // 更新行数为0 = 版本已变更，被别人抢先修改
-        return rows > 0;
+        if (rows <= 0) {
+            // 乐观锁冲突提示
+            throw new BusinessException(SystemConstants.OPTIMISTIC_LOCK_MSG);
+        }
     }
 
     /**
@@ -132,22 +151,26 @@ public class SysUserServiceImpl implements SysUserService {
      * MyBatis-Plus 认准了这就是个普通字段，它在底层生成的 SQL 就是硬碰硬的物理删除
      */
     @Override
-    public boolean deleteUser(Long id) {
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteUser(Long id) {
         if (id == null) {
-            throw new IllegalArgumentException("用户 ID 不能为空");
+            throw new BusinessException("用户ID不能为空");
         }
         //这里是执行的逻辑删除 看上面注释
         int rows = sysUserMapper.deleteById(id);
-        return rows > 0; // 影响行数大于 0 则代表删除成功
+        if (rows <= 0) {
+            throw new BusinessException("删除用户失败，ID不存在");
+        }
     }
 
     /**
      * 管理员临时 物理删除，不要外泄
      */
     @Override
-    public boolean adminPhysicalDeleteUser(Long id) {
+    @Transactional(rollbackFor = Exception.class)
+    public void adminPhysicalDeleteUser(Long id) {
         if (id == null) {
-            throw new IllegalArgumentException("用户 ID 不能为空");
+            throw new BusinessException("用户ID不能为空");
         }
         // 使用 Wrappers 构建条件，调用 delete(Wrapper) 方法
         // 这并不会直接执行真正的 DELETE FROM sys_user WHERE id = ?
@@ -155,7 +178,9 @@ public class SysUserServiceImpl implements SysUserService {
 //        int rows = sysUserMapper.delete(new LambdaQueryWrapper<SysUser>()
 //                .eq(SysUser::getId, id));
         int rows = sysUserMapper.physicalDeleteById(id);
-        return rows > 0;// 真正从数据库物理删除，返回受影响行数
+        if (rows <= 0) {
+            throw new BusinessException("物理删除失败，ID不存在");
+        }
     }
 
 }

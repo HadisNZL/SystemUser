@@ -1,587 +1,241 @@
 # Admin System
 
-一个基于 **Spring Boot 3.5.16 + MyBatis-Plus** 的后台管理系统练手项目，当前已完成用户列表、条件分页、新增、修改、逻辑删除和物理删除，以及统一返回、全局异常、跨域、时间格式化、自动填充、乐观锁等基础能力。
+基于 Spring Boot 3.5.16 的后台管理系统练手项目。当前重点已经从基础 CRUD 演进到企业后台常见能力：用户管理、JWT 登录、Spring Security 鉴权、RBAC 权限模型、Knife4j 接口文档、MyBatis-Plus 持久层能力。
 
----
+## 技术栈
 
-## 1. 技术栈
+- JDK 17
+- Spring Boot 3.5.16
+- Spring Security
+- JJWT 0.12.7
+- MyBatis-Plus 3.5.5
+- MySQL 8.x
+- Knife4j Next 5.0.18
+- MapStruct 1.5.5.Final
+- Lombok
 
-- **Spring Boot 3.5.16** - 核心框架
-- **MyBatis-Plus 3.5.5** - 持久层框架，简化 CRUD 与分页开发
-- **MySQL 8.x** - 当前使用数据库
-- **Spring Validation** - 参数校验依赖
-- **Jackson** - JSON 序列化 / 反序列化
-- **Lombok** - 简化实体类与 DTO/VO 代码
-- **MapStruct 1.5.5.Final** - 在编译期完成 Entity 与 VO 的类型安全转换
-- **HikariCP** - 数据库连接池
-- **JDK 17** - 开发环境
+## 当前能力
 
----
+- 用户登录：`POST /sys/login`
+- JWT 签发与校验
+- BCrypt 密码加密与校验
+- Spring Security 无状态认证
+- `@PreAuthorize` 接口级权限控制
+- RBAC 五表权限模型
+- 用户列表、分页查询、新增、修改、逻辑删除、物理删除
+- MyBatis-Plus 分页、逻辑删除、乐观锁、自动填充
+- Knife4j / OpenAPI 文档
+- DTO / VO / Entity 分层
 
-## 2. 你当前已经增加的内容总结
-
-相比最初版本，目前项目已经补充了下面这些能力：
-
-### 基础接口能力
-- ✅ 用户列表查询
-- ✅ 用户分页查询
-- ✅ 用户条件分页查询
-- ✅ 新增用户
-- ✅ 修改用户
-- ✅ 删除用户
-
-### 数据访问能力
-- ✅ MyBatis-Plus 基础 CRUD
-- ✅ MyBatis-Plus 分页插件
-- ✅ 逻辑删除配置
-- ✅ 雪花算法主键 ID
-- ✅ 创建时间、更新时间、删除标记自动填充
-- ✅ 乐观锁版本号自动填充与并发更新保护
-
-### 通用基础设施
-- ✅ 统一响应结果封装 `Result<T>`
-- ✅ 统一分页结果封装 `PageResult<T>`
-- ✅ 全局异常处理 `GlobalExceptionHandler`
-- ✅ 全局跨域配置 `CorsConfig`
-- ✅ 全局时间格式化配置 `JacksonConfig`
-
-### 工程配置能力
-- ✅ 多环境配置拆分：`dev / test / prod`
-- ✅ 开发、测试、生产环境日志区分
-- ✅ 开发环境默认激活
-- ✅ MyBatis-Plus SQL 日志输出
-
-### 分层与对象设计
-- ✅ `entity` 实体类
-- ✅ `dto` 入参对象
-- ✅ `vo` 出参对象，条件分页接口不再直接返回实体
-- ✅ `convert` 对象转换层，通过 MapStruct 完成 `SysUser` 到 `UserPageVO` 的转换
-- ✅ `common` 通用返回与异常类
-- ✅ `handler` 自动填充处理器
-
----
-
-## 3. 项目结构
-
-当前项目 `com.system` 包下结构如下：
+## 项目结构
 
 ```text
-com.system
-├── AdminSystemApplication        启动类
-├── config                        所有配置类：跨域、MP、时间序列化
-├── controller                    控制层接口
-├── service                       业务接口层
-│   └── impl                       业务实现层（当前代码目录名为 impl）
-├── mapper                        数据持久层
-├── entity                        数据库实体类
-├── dto                           入参传输对象
-├── vo                            出参视图对象
-├── convert                       Entity / VO 对象转换层
-├── common                        公共返回类、异常类
-├── handler                       MyBatis-Plus 自动填充处理器
+src/main/java/com/system
+├── common                  通用响应、异常、常量
+├── config                  Spring Security、MyBatis-Plus、跨域、Knife4j、Jackson 配置
+├── config/prop             JWT 配置属性
+├── controller              接口层
+├── convert                 MapStruct 对象转换
+├── dto                     请求入参对象
+├── entity                  数据库实体
+├── filter                  Spring Security JWT Filter
+├── handler                 MyBatis-Plus 自动填充处理器
+├── mapper                  MyBatis Mapper
+├── security/handler        401 / 403 安全异常处理
+├── service                 业务接口
+├── service/impl            业务实现
+├── util                    JWT 工具
+└── vo                      响应视图对象
 ```
 
-> 说明：
->
-> 1. 你计划中的 `util`、`config.prop` 这两个包目前代码里还没有正式创建。
-> 2. 你已经把项目往比较标准的企业分层方向推进了，后面如果继续扩展，补上 `util`、`constant`、`config.prop` 会更完整。
+## 数据库
 
-### 对应源码目录
+数据库关系和初始化数据见：
 
 ```text
-src/main/java/com/system/
-├── AdminSystemApplication.java
-├── common/
-│   ├── GlobalExceptionHandler.java
-│   ├── PageResult.java
-│   └── Result.java
-├── config/
-│   ├── CorsConfig.java
-│   ├── JacksonConfig.java
-│   └── MyBatisPlusConfig.java
-├── controller/
-│   └── SysUserController.java
-├── convert/
-│   └── UserConvert.java
-├── dto/
-│   └── UserSearchDTO.java
-├── entity/
-│   └── SysUser.java
-├── handler/
-│   └── MyMetaObjectHandler.java
-├── mapper/
-│   └── SysUserMapper.java
-├── service/
-│   ├── SysUserService.java
-│   └── impl/
-│       └── SysUserServiceImpl.java
-└── vo/
-    └── UserPageVO.java
+00-数据库表结构文档.md
 ```
 
-资源配置目录：
+当前 RBAC 核心链路：
 
 ```text
-src/main/resources/
-├── application.yaml
-├── application-dev.yaml
-├── application-test.yaml
-└── application-prod.yaml
+sys_user
+  -> sys_user_role
+  -> sys_role
+  -> sys_role_permission
+  -> sys_permission.permission_key
+  -> Spring Security GrantedAuthority
 ```
 
----
+admin 用户要访问用户管理接口，至少需要这些权限：
 
-## 4. 快速开始
+```text
+sys:user:list
+sys:user:add
+sys:user:edit
+sys:user:remove
+sys:user:physicalDel
+```
 
-### 环境要求
+## 密码说明
 
-- JDK 17+
-- Maven 3.6+
-- MySQL 8.0+
-- IntelliJ IDEA / VS Code 等 Java IDE
+数据库中的 `sys_user.password` 必须存 BCrypt 密文，不能存明文 `123456`。
 
-### 创建数据库
+生成密文：
+
+```bash
+./mvnw -Dtest=PasswordEncoderTests test
+```
+
+生成指定明文的密文：
+
+```bash
+./mvnw -Dtest=PasswordEncoderTests -DrawPassword=123456 test
+```
+
+更新 admin 密码示例：
 
 ```sql
-CREATE DATABASE admin_system DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+UPDATE sys_user
+SET password = '这里替换为 BCrypt 密文'
+WHERE username = 'admin';
 ```
 
-### 创建用户表
+BCrypt 每次生成的密文都不同，这是正常现象。只要 `matches("123456", 密文)` 能通过即可。
 
-```sql
-USE admin_system;
+## 启动项目
 
-CREATE TABLE `sys_user` (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '用户ID',
-  `username` varchar(50) NOT NULL COMMENT '用户名',
-  `password` varchar(100) NOT NULL COMMENT '密码',
-  `nickname` varchar(50) DEFAULT NULL COMMENT '昵称',
-  `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
-  `email` varchar(100) DEFAULT NULL COMMENT '邮箱',
-  `status` tinyint DEFAULT '1' COMMENT '状态：0-禁用，1-启用',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `delete_flag` tinyint DEFAULT '0' COMMENT '删除标记：0-未删除，1-已删除',
-  `version` int DEFAULT '1' COMMENT '乐观锁版本号',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_username` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='系统用户表';
-```
-
-### 初始化测试数据
-
-```sql
-INSERT INTO sys_user (username, password, nickname, phone, email) VALUES
-('admin', '123456', 'Super管理员', '18510044400', 'niu_zilin@163.com'),
-('test', '123456', '测试用户', '18932550885', '');
-```
-
-### 启动项目
+开发环境默认激活 `dev`：
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-或：
-
-```bash
-mvn spring-boot:run
-```
-
----
-
-## 5. 多环境配置说明
-
-项目已经拆分为多环境配置：
-
-- `application.yaml`：主配置，负责激活环境与公共配置
-- `application-dev.yaml`：开发环境
-- `application-test.yaml`：测试环境
-- `application-prod.yaml`：生产环境
-
-当前默认激活：
-
-```yaml
-spring:
-  profiles:
-    active: dev
-```
-
-### 环境切换方式
-
-例如切到测试环境：
+切换 profile：
 
 ```bash
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=test
 ```
 
----
-
-## 6. API 接口文档
-
-接口统一前缀：
+接口文档：
 
 ```text
-/sys/user
+http://localhost:8080/doc.html
+http://localhost:8080/v3/api-docs
 ```
 
-### 6.1 查询用户列表
+## 登录与鉴权测试
 
-```http
-GET /sys/user/list
+登录：
+
+```bash
+curl -X POST http://localhost:8080/sys/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"123456"}'
 ```
 
-### 6.2 条件分页查询用户
+成功后返回的 `data` 是 JWT。
 
-```http
-GET /sys/user/search_list?username=test&status=1&pageNum=1&pageSize=10
+访问受保护接口：
+
+```bash
+curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10" \
+  -H "Authorization: Bearer 这里替换为登录返回的token"
 ```
 
-支持条件：
-- `username`：用户名模糊查询
-- `status`：状态精准查询
-- `startTime`：开始时间
-- `endTime`：结束时间
-- `pageNum`：页码
-- `pageSize`：每页条数
+未带 token 时预期返回 401。带 token 但没有权限时预期返回 403。
 
-对应 DTO：
+## 用户接口与权限
 
-```java
-public class UserSearchDTO {
-    private String username;
-    private Integer status;
-    private String startTime;
-    private String endTime;
-}
-```
+| 接口 | 方法 | 权限 |
+| --- | --- | --- |
+| `/sys/user/list` | GET | `sys:user:list` |
+| `/sys/user/search_list` | GET | `sys:user:list` |
+| `/sys/user/add` | POST | `sys:user:add` |
+| `/sys/user/modify` | POST | `sys:user:edit` |
+| `/sys/user/delete/{id}` | DELETE | `sys:user:remove` |
+| `/sys/user/delete_admin/{id}` | DELETE | `sys:user:physicalDel` |
 
-接口分页记录返回 `UserPageVO`，包含 ID、用户名、昵称、手机号、邮箱、状态和创建时间，不返回密码、更新时间和删除标记等实体字段。`SysUser` 到 `UserPageVO` 的转换由 MapStruct 在编译期生成实现。
+新增用户使用 `UserAddDTO`，需要传 `password`。查询返回使用 `UserPageVO`，不返回密码。
 
-### 6.3 新增用户
+## DTO / VO 边界
 
-```http
-POST /sys/user/add
-Content-Type: application/json
+- `LoginDTO`：登录入参，包含 `username/password`
+- `UserAddDTO`：新增用户入参，包含 `password`
+- `UserUpdateDTO`：修改用户入参，不直接修改密码
+- `UserSearchDTO`：查询条件
+- `UserPageVO`：用户分页返回对象，不包含密码
+- `SysUser`：数据库实体，不直接作为主要响应对象暴露
 
-{
-  "username": "tom",
-  "nickname": "汤姆",
-  "phone": "13800138000",
-  "email": "tom@qq.com"
-}
-```
+原则：入参用 DTO，出参用 VO，数据库映射用 Entity。
 
-说明：
-- 如果 `password` 为空，系统默认补 `123456`
-- 如果 `status` 为空，系统默认补 `1`
-- `version`、创建时间、更新时间和删除标记由 MyBatis-Plus 自动填充
+## 构建命令
 
-### 6.4 修改用户
-
-```http
-POST /sys/user/modify
-Content-Type: application/json
-
-{
-  "id": 1,
-  "nickname": "新昵称",
-  "email": "new@example.com"
-}
-```
-
-修改时忽略值为 `null` 的字段，并通过 MyBatis-Plus 乐观锁避免并发更新互相覆盖。
-
-### 6.5 逻辑删除用户
-
-```http
-DELETE /sys/user/delete/{id}
-```
-
-实体字段使用了 `@TableLogic`，因此 `deleteById(id)` 实际更新删除标记，不会物理移除记录。
-
-### 6.6 管理员物理删除用户
-
-```http
-DELETE /sys/user/delete_admin/{id}
-```
-
-该接口通过 Mapper XML 执行 `DELETE FROM sys_user WHERE id = #{id}`，会永久移除记录，仅供受控管理场景使用。
-
----
-
-## 7. 统一返回格式
-
-项目接口统一返回 `Result<T>`：
-
-```json
-{
-  "code": 200,
-  "msg": "操作成功",
-  "isSuccess": true,
-  "data": {}
-}
-```
-
-字段说明：
-- `code`：状态码
-- `msg`：消息说明
-- `isSuccess`：是否成功
-- `data`：实际返回数据
-
-分页结果统一封装为：
-
-```json
-{
-  "total": 100,
-  "list": []
-}
-```
-
----
-
-## 8. 关键配置说明
-
-### 8.1 MyBatis-Plus 分页插件
-
-```java
-@Configuration
-public class MyBatisPlusConfig {
-    @Bean
-    public MybatisPlusInterceptor mybatisPlusInterceptor() {
-        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
-        return interceptor;
-    }
-}
-```
-
-### 8.2 逻辑删除配置
-
-`application.yaml` 中已配置：
-
-```yaml
-mybatis-plus:
-  global-config:
-    db-config:
-      logic-delete-field: deleteFlag
-      logic-not-delete-value: 0
-      logic-delete-value: 1
-```
-
-实体类中也已配置：
-
-```java
-@TableLogic
-private Integer deleteFlag;
-```
-
-### 8.3 自动填充配置
-
-`MyMetaObjectHandler` 已支持：
-- 插入时自动填充 `createTime`
-- 插入时自动填充 `updateTime`
-- 插入时自动填充 `deleteFlag`
-- 更新时自动刷新 `updateTime`
-
-### 8.4 时间格式统一
-
-`JacksonConfig` 已统一 `LocalDateTime` 序列化与反序列化格式：
-
-```text
-yyyy-MM-dd HH:mm:ss
-```
-
-### 8.5 跨域配置
-
-项目已通过 `CorsConfig` 统一开放跨域，便于前后端分离联调。
-
----
-
-## 9. 当前代码设计特点
-
-### 9.1 实体层
-
-`SysUser` 已具备：
-- 雪花算法主键：`IdType.ASSIGN_ID`
-- 逻辑删除：`@TableLogic`
-- 乐观锁：`@Version`
-- 创建 / 更新时间自动填充：`@TableField(fill = ...)`
-
-### 9.2 DTO / VO 分离趋势
-
-目前查询入参与分页出参已经完成 DTO / VO 分离：
-
-- `UserSearchDTO`：负责接收查询参数
-- `UserPageVO`：负责定义页面输出对象
-- `UserConvert`：负责双向转换，并在修改时忽略值为 `null` 的字段
-
-条件分页接口 `/sys/user/search_list` 已返回 `PageResult<UserPageVO>`，避免直接暴露数据库实体及密码等敏感字段。其他仍返回实体的查询接口可以后续按相同方式迁移。
-
-### 9.3 查询写法
-
-你已经使用了 `LambdaQueryWrapper` 做动态条件拼接，支持：
-- `like` 模糊查询
-- `eq` 精准查询
-- `ge / le` 时间区间查询
-- `orderByDesc` 倒序排序
-
-这说明项目已经从“能查数据”进化到了“可扩展条件查询”的阶段。
-
----
-
-## 10. 以后切换数据库是否方便？
-
-### 结论
-
-**相对比较好切换，但目前还不是“零成本切换”。**
-
-### 为什么说“比较好切换”
-
-你当前项目有几个点对数据库切换是友好的：
-
-1. **业务层和数据库访问层已经分开**  
-   Controller → Service → Mapper 分层清晰，不会把 SQL 写得到处都是。
-
-2. **使用的是 MyBatis-Plus**  
-   大部分基础 CRUD、分页、条件查询都通过 MP 提供的能力实现，不是手写大量原生 SQL。
-
-3. **配置集中在 application*.yaml**  
-   数据源、驱动、日志配置都比较集中，未来替换更容易定位。
-
-4. **目前没有 XML 大量手写 SQL**  
-   这对切换数据库是好事，改造成本会小一些。
-
-### 为什么说“还不是零成本”
-
-当前代码里仍有一些地方和 MySQL 绑定较紧：
-
-1. **驱动固定写死为 MySQL**  
-   `application*.yaml` 里现在使用的是 MySQL 驱动和 URL。
-
-2. **分页插件写死了 `DbType.MYSQL`**  
-   `MyBatisPlusConfig` 当前明确指定了 MySQL。
-
-3. **数据库建表语句偏 MySQL 风格**  
-   比如自增、字符集、引擎这些语法换 PostgreSQL / Oracle 时要调整。
-
-4. **时间查询参数现在是字符串**  
-   虽然能用，但如果以后切换数据库，不同数据库对字符串到时间的隐式转换兼容性可能不同。
-
-### 如果以后要换库，主要改哪些地方
-
-未来从 MySQL 切到 PostgreSQL / Oracle / SQL Server，大概率要改：
-
-- 数据源驱动
-- JDBC URL
-- MyBatis-Plus 的 `DbType`
-- 建表 DDL
-- 个别数据库方言相关 SQL / 时间处理方式
-- 主键生成策略是否继续沿用当前方案
-
-### 综合评价
-
-如果按 10 分来评估你的项目数据库可切换性：
-
-- **当前大概在 7/10 左右**
-
-意思是：
-- **比把 SQL 写死在各处的项目好很多**
-- **但还没有抽象到真正“切换配置就完事”的程度**
-
-对你现在这个阶段来说，这个结构已经是一个不错的起点了。
-
----
-
-## 11. 后续建议方向
-
-你后面可以继续往这些方向演进：
-
-- [ ] 用户修改接口
-- [ ] 按 ID 查询用户详情
-- [ ] 用户状态启用 / 禁用
-- [ ] 参数校验注解真正落到 DTO 上
-- [ ] VO 全面替代直接返回 Entity
-- [ ] 统一错误码与常量类
-- [ ] 自定义配置属性绑定类 `config.prop`
-- [ ] 通用工具类 `util`
-- [ ] 认证与权限控制（JWT / Spring Security）
-
----
-
-## 12. 常见问题
-
-### 1）IDEA 提示主类不在 source root
-
-通常是 Maven 项目没有正确刷新，执行以下操作：
-
-1. IDEA 右侧 Maven 面板点击刷新
-2. 执行：
+只编译：
 
 ```bash
 ./mvnw clean compile
 ```
 
-3. 重新运行项目
+跳过测试打包：
 
-### 2）MyBatis 日志提示未注册事务同步
+```bash
+./mvnw clean package -DskipTests
+```
 
-如果只是普通查询，这通常是正常现象，不代表报错。
+完整打包：
 
-### 3）为什么查询自动过滤已删除数据
+```bash
+./mvnw clean package
+```
 
-因为你已经配置了：
-- `@TableLogic`
-- `logic-delete-field`
-- `logic-not-delete-value`
-- `logic-delete-value`
+如果完整打包在 test 阶段报 Mockito / ByteBuddy agent 相关错误，通常是当前 JDK 或运行环境不允许 Mockito inline mock maker 自挂载，不是业务代码编译失败。可以先用 `-DskipTests` 打包，后续再单独整理测试配置。
 
-MyBatis-Plus 会自动拼接逻辑删除条件。
+## 常见问题
 
----
+### 登录提示账号或密码错误
 
-## 13. 更新日志
+优先确认数据库密码是否是 BCrypt 密文，而不是明文 `123456`。
 
-### v0.0.5
-- ✨ 新增用户修改接口 `/sys/user/modify`
-- ✨ 接入 MyBatis-Plus 乐观锁和 `version` 自动填充
-- ✨ MapStruct 支持 VO 转 Entity 及忽略空值的局部更新
-- ✨ 新增逻辑删除接口与管理员物理删除接口
-- 🐛 修正失败响应的 `isSuccess` 状态
-- 📝 同步更新数据库字段与 API 文档
+```sql
+SELECT username, password, LENGTH(password), status
+FROM sys_user
+WHERE username = 'admin';
+```
 
-### v0.0.4
-- ✨ 集成 MapStruct，并配置 Lombok 兼容的注解处理器
-- ✨ 新增 `UserConvert`，在编译期生成 `SysUser` 到 `UserPageVO` 的转换实现
-- ♻️ 条件分页查询改为返回 `PageResult<UserPageVO>`
-- 🔒 分页结果不再暴露密码、邮箱、更新时间和删除标记等实体字段
-- 📝 README 同步更新技术栈、项目结构与接口返回说明
+正常 BCrypt 密文长度通常是 60，用户状态 `status` 应为 1。
 
-### v0.0.3
-- ✨ 新增条件分页查询 DTO：`UserSearchDTO`
-- ✨ 新增分页输出对象：`UserPageVO`
-- ✨ 新增全局时间格式化配置：`JacksonConfig`
-- ✨ 新增自动填充处理器：`MyMetaObjectHandler`
-- ✨ 新增多环境配置：dev / test / prod
-- ✨ 新增逻辑删除全局配置
-- ✨ 实体支持雪花算法主键
-- 📝 README 按当前代码结构重新整理完善
+### 访问接口跳转到 /login
 
-### v0.0.2
-- ✨ 新增用户增删改查基础能力
-- ✨ 新增 MyBatis-Plus 分页插件
-- ✨ 新增统一响应封装（Result）
-- ✨ 新增分页结果封装（PageResult）
-- ✨ 新增全局异常处理
-- ✨ 新增跨域配置（CORS）
-- ✨ 新增参数校验依赖
+说明 Spring Security 默认登录页还在生效。当前项目已经通过 `SecurityConfig` 关闭了 `formLogin` 和 `httpBasic`，并放行 `/sys/login`。
 
-### v0.0.1
-- 初始化项目结构
-- 完成用户查询接口
-- 集成 MyBatis-Plus
-- 配置数据库连接
+### 访问接口返回 401
 
----
+通常是没有带 token，或者请求头格式不对。当前标准格式是：
 
-**开发者**： [HadisNZL](https://github.com/HadisNZL)
+```text
+Authorization: Bearer token
+```
+
+### 访问接口返回 403
+
+说明登录成功，但当前用户没有接口所需权限。检查：
+
+```text
+sys_user_role
+sys_role_permission
+sys_permission.permission_key
+```
+
+### Mapper 权限查询报 Invalid bound statement
+
+检查 `SysPermissionMapper.xml` 的 namespace 是否是：
+
+```xml
+com.system.mapper.SysPermissionMapper
+```
+
+## 相关文档
+
+- `00-数据库表结构文档.md`：数据库 DDL、RBAC 表关系、初始化数据
+- `01-项目开发说明.md`：认证鉴权流程、开发约定、测试流程、排错清单

@@ -1,5 +1,8 @@
 package com.system.convert;
 
+import com.system.dto.UserAddDTO;
+import com.system.dto.UserSearchDTO;
+import com.system.dto.UserUpdateDTO;
 import com.system.entity.SysUser;
 import com.system.vo.UserPageVO;
 import org.mapstruct.BeanMapping;
@@ -12,10 +15,12 @@ public interface UserConvert {
 
     // 如果源对象和目标对象的属性名完全一致，会自动映射
     // 如果名字不一致，可以用 @Mapping(source = "源字段", target = "目标字段") 手动指定
-    UserPageVO convert(SysUser sysUser);
+    UserPageVO convertUserPageVO(SysUser sysUser);
 
     // UserPageVO 转 SysUser (新增的反向方法)
     SysUser convert(UserPageVO userVO);
+    // UserAddDTO 转 SysUser (新增的反向方法)
+    SysUser convertUserAddDTO(UserAddDTO userAddDTO);
 
     /**
      * 3. 新增的：局部更新方法（专门用于编辑）
@@ -23,5 +28,5 @@ public interface UserConvert {
      * 作用：当 UserPageVO 中的属性为 null 时，不覆盖 dbUser 原本的值
      */
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    void updateEntityFromVO(UserPageVO userVO, @MappingTarget SysUser dbUser);
+    void updateEntityFromVO(UserUpdateDTO userUpdateDTO, @MappingTarget SysUser dbUser);
 }

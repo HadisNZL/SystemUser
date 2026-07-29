@@ -2,16 +2,29 @@ package com.system.controller;
 
 import com.system.common.PageResult;
 import com.system.common.Result;
+import com.system.common.SystemConstants;
+import com.system.dto.UserAddDTO;
 import com.system.dto.UserSearchDTO;
+import com.system.dto.UserUpdateDTO;
 import com.system.entity.SysUser;
 import com.system.service.SysUserService;
 import com.system.vo.UserPageVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+/**
+ * sys:user:list        获取用户列表
+ * sys:user:search      获取用户分页列表
+ * sys:user:add         新增用户
+ * sys:user:edit        修改用户
+ * sys:user:remove      逻辑删除用户
+ * sys:user:physicalDel 管理员物理删除用户
+ */
 
 @Tag(name = "用户管理模块", description = "提供用户的增删改查及并发控制接口")
 @RestController
@@ -23,6 +36,7 @@ public class SysUserController {
 
     @Operation(summary = "获取用户列表", description = "用户列表的查询")
     @GetMapping("/list")
+    @PreAuthorize("hasAuthority('sys:user:list')")
     public Result<List<SysUser>> userList() {
         List<SysUser> list = sysUserService.findUserList();
         return Result.success(list);
@@ -33,7 +47,8 @@ public class SysUserController {
     //e.g.带dto任何字段都可以 GET http://localhost:8080/page?username=test&status=1&pageNum=2&pageSize=10
     @Operation(summary = "获取用户分页式列表", description = "分页式列表的获取")
     @GetMapping("/search_list")
-    public Result<PageResult<UserPageVO>> getUser(UserSearchDTO dto, @RequestParam(defaultValue = "1") Integer pageNum, @RequestParam(defaultValue = "5") Integer pageSize) {
+    @PreAuthorize("hasAuthority('sys:user:list')")
+    public Result<PageResult<UserPageVO>> getUserList(UserSearchDTO dto, @RequestParam(defaultValue = SystemConstants.DEFAULT_PAGE_NUM) Integer pageNum, @RequestParam(defaultValue = SystemConstants.DEFAULT_PAGE_SIZE) Integer pageSize) {
         PageResult<UserPageVO> page = sysUserService.getUserPage(dto, pageNum, pageSize);
         return Result.success(page);
     }
@@ -47,25 +62,20 @@ public class SysUserController {
     //}
     @Operation(summary = "增加一个用户", description = "传入VO，增加一个对象")
     @PostMapping("/add")
-    public Result<String> addUser(@RequestBody UserPageVO user) {
-        boolean success = sysUserService.saveUser(user);
-        if (success) {
-            return Result.success("新增用户成功");
-        } else {
-            return Result.fail("新增用户失败");
-        }
+    @PreAuthorize("hasAuthority('sys:user:add')")
+    public Result<String> addUser(@RequestBody UserAddDTO userAddDTO) {
+        sysUserService.saveUser(userAddDTO);
+        //失败都在serviceImpl中拦截，这里只处理成功
+        return Result.success("新增用户成功");
     }
 
     //修改
     @Operation(summary = "修改用户信息", description = "通过传入VO修改，VO的属性选择性传入就可以，Id必传")
     @PostMapping("/modify")
-    public Result<Boolean> editUser(@RequestBody UserPageVO userPageVO) {
-        boolean success = sysUserService.editUser(userPageVO);
-        if (success) {
-            return Result.success(true);
-        } else {
-            return Result.fail("数据已被其他人修改或并发冲突，请刷新后重试");
-        }
+    @PreAuthorize("hasAuthority('sys:user:edit')")
+    public Result<Boolean> editUser(@RequestBody UserUpdateDTO userUpdateDTO) {
+        sysUserService.editUser(userUpdateDTO);
+        return Result.success(true);
     }
 
     /**
@@ -74,9 +84,10 @@ public class SysUserController {
      */
     @Operation(summary = "删除一个用户(逻辑删除)", description = "逻辑删除")
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAuthority('sys:user:remove')")
     public Result<String> deleteUser(@PathVariable Long id) {
-        boolean success = sysUserService.deleteUser(id);
-        return success ? Result.success("删除用户成功") : Result.fail("删除用户失败，ID可能不存在");
+        sysUserService.deleteUser(id);
+        return Result.success("删除用户成功");
     }
 
     /**
@@ -85,8 +96,9 @@ public class SysUserController {
      */
     @Operation(summary = "物理删除用户(管理员)", description = "物理删除")
     @DeleteMapping("/delete_admin/{id}")
+    @PreAuthorize("hasAuthority('sys:user:physicalDel')")
     public Result<Boolean> adminPhysicalDeleteUser(@PathVariable Long id) {
-        boolean success = sysUserService.adminPhysicalDeleteUser(id);
-        return success ? Result.success(true) : Result.fail("管理员临时 物理删除失败");
+        sysUserService.adminPhysicalDeleteUser(id);
+        return Result.success(true);
     }
 }
