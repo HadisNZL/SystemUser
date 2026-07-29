@@ -191,10 +191,10 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 ./mvnw clean compile
 ```
 
-跳过测试打包：
+运行测试：
 
 ```bash
-./mvnw clean package -DskipTests
+./mvnw test
 ```
 
 完整打包：
@@ -203,7 +203,12 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 ./mvnw clean package
 ```
 
-如果完整打包在 test 阶段报 Mockito / ByteBuddy agent 相关错误，通常是当前 JDK 或运行环境不允许 Mockito inline mock maker 自挂载，不是业务代码编译失败。可以先用 `-DskipTests` 打包，后续再单独整理测试配置。
+当前测试包含：
+
+- `PasswordEncoderTests`：生成并校验 BCrypt 密文
+- `LoginControllerTest`：登录接口成功响应、参数校验
+- `SecurityHandlerTest`：未登录 401、无权限 403 返回
+- `AdminSystemApplicationTests`：Spring Boot 上下文启动
 
 ## 常见问题
 
