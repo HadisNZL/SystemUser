@@ -4,6 +4,7 @@ import com.system.dto.UserAddDTO;
 import com.system.dto.UserSearchDTO;
 import com.system.dto.UserUpdateDTO;
 import com.system.entity.SysUser;
+import com.system.vo.UserDetailVO;
 import com.system.vo.UserPageVO;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -17,6 +18,8 @@ public interface UserConvert {
     // 如果源对象和目标对象的属性名完全一致，会自动映射
     // 如果名字不一致，可以用 @Mapping(source = "源字段", target = "目标字段") 手动指定
     UserPageVO convertUserPageVO(SysUser sysUser);
+
+    UserDetailVO convertUserDetailVO(SysUser sysUser);
 
     // UserAddDTO 转 SysUser (新增的反向方法)
     //在把 UserAddDTO 转换成 SysUser 时，忽略掉 id、createTime 等几个字段，不进行复制。

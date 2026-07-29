@@ -1,6 +1,7 @@
 package com.system.common;
 
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -19,6 +20,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public Result<?> businessExceptionHandler(BusinessException e) {
         return Result.fail(e.getCode(), e.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public Result<?> accessDeniedExceptionHandler(AccessDeniedException e) {
+        return Result.fail(ResultCode.FORBIDDEN);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

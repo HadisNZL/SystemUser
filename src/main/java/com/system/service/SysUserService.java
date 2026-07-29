@@ -3,10 +3,14 @@ package com.system.service;
 import com.system.common.PageResult;
 import com.system.dto.UserAddDTO;
 import com.system.dto.UserSearchDTO;
+import com.system.dto.UserStatusDTO;
 import com.system.dto.UserUpdateDTO;
+import com.system.vo.UserDetailVO;
 import com.system.vo.UserPageVO;
 
 public interface SysUserService {
+
+    UserDetailVO getUserDetail(Long id);
 
     //  多条件查询
     PageResult<UserPageVO> getUserPage(UserSearchDTO dto, Integer pageNum, Integer pageSize);
@@ -17,6 +21,8 @@ public interface SysUserService {
 
     //编辑一条数据
     void editUser(UserUpdateDTO user);
+
+    void updateUserStatus(UserStatusDTO userStatusDTO);
 
     /**
      * 删除一条数据

@@ -73,6 +73,8 @@ admin 用户要访问用户管理接口，至少需要这些权限：
 
 ```text
 sys:user:list
+sys:user:detail
+sys:user:status
 sys:user:add
 sys:user:edit
 sys:user:remove
@@ -151,7 +153,9 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 
 | 接口 | 方法 | 权限 |
 | --- | --- | --- |
+| `/sys/user/{id}` | GET | `sys:user:detail` |
 | `/sys/user/search_list` | GET | `sys:user:list` |
+| `/sys/user/status` | PUT | `sys:user:status` |
 | `/sys/user/add` | POST | `sys:user:add` |
 | `/sys/user/modify` | POST | `sys:user:edit` |
 | `/sys/user/delete/{id}` | DELETE | `sys:user:remove` |
@@ -164,8 +168,10 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `LoginDTO`：登录入参，包含 `username/password`
 - `UserAddDTO`：新增用户入参，包含 `password`
 - `UserUpdateDTO`：修改用户入参，不直接修改密码
+- `UserStatusDTO`：启用 / 禁用用户入参，只包含 `id/status`
 - `UserSearchDTO`：查询条件
 - `UserPageVO`：用户分页返回对象，不包含密码
+- `UserDetailVO`：用户详情返回对象，不包含密码、逻辑删除、版本号
 - `SysUser`：数据库实体，不直接作为主要响应对象暴露
 
 原则：入参用 DTO，出参用 VO，数据库映射用 Entity。
@@ -207,6 +213,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 
 - `PasswordEncoderTests`：生成并校验 BCrypt 密文
 - `LoginControllerTest`：登录接口成功响应、参数校验
+- `SysUserControllerTest`：用户详情响应不暴露敏感字段
 - `SecurityHandlerTest`：未登录 401、无权限 403 返回
 - `AdminSystemApplicationTests`：Spring Boot 上下文启动
 

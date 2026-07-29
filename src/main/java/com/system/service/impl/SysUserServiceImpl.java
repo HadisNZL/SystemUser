@@ -9,10 +9,12 @@ import com.system.common.SystemConstants;
 import com.system.convert.UserConvert;
 import com.system.dto.UserAddDTO;
 import com.system.dto.UserSearchDTO;
+import com.system.dto.UserStatusDTO;
 import com.system.dto.UserUpdateDTO;
 import com.system.entity.SysUser;
 import com.system.mapper.SysUserMapper;
 import com.system.service.SysUserService;
+import com.system.vo.UserDetailVO;
 import com.system.vo.UserPageVO;
 import jakarta.annotation.Resource;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -51,6 +53,15 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Resource
     private PasswordEncoder passwordEncoder;
+
+    @Override
+    public UserDetailVO getUserDetail(Long id) {
+        SysUser user = sysUserMapper.selectById(id);
+        if (user == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "用户不存在");
+        }
+        return userConvert.convertUserDetailVO(user);
+    }
 
     /**
      * LambdaQueryWrapper用法
@@ -126,6 +137,20 @@ public class SysUserServiceImpl implements SysUserService {
         // 更新行数为0 = 版本已变更，被别人抢先修改
         if (rows <= 0) {
             // 乐观锁冲突提示
+            throw new BusinessException(ResultCode.OPTIMISTIC_LOCK_ERROR, SystemConstants.OPTIMISTIC_LOCK_MSG);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateUserStatus(UserStatusDTO userStatusDTO) {
+        SysUser dbUser = sysUserMapper.selectById(userStatusDTO.getId());
+        if (dbUser == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "用户不存在");
+        }
+        dbUser.setStatus(userStatusDTO.getStatus());
+        int rows = sysUserMapper.updateById(dbUser);
+        if (rows <= 0) {
             throw new BusinessException(ResultCode.OPTIMISTIC_LOCK_ERROR, SystemConstants.OPTIMISTIC_LOCK_MSG);
         }
     }
