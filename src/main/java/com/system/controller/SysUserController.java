@@ -12,7 +12,11 @@ import com.system.vo.UserPageVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +33,7 @@ import java.util.List;
 @Tag(name = "用户管理模块", description = "提供用户的增删改查及并发控制接口")
 @RestController
 @RequestMapping("/sys/user")
+@Validated
 public class SysUserController {
 
     @Resource
@@ -48,7 +53,9 @@ public class SysUserController {
     @Operation(summary = "获取用户分页式列表", description = "分页式列表的获取")
     @GetMapping("/search_list")
     @PreAuthorize("hasAuthority('sys:user:list')")
-    public Result<PageResult<UserPageVO>> getUserList(UserSearchDTO dto, @RequestParam(defaultValue = SystemConstants.DEFAULT_PAGE_NUM) Integer pageNum, @RequestParam(defaultValue = SystemConstants.DEFAULT_PAGE_SIZE) Integer pageSize) {
+    public Result<PageResult<UserPageVO>> getUserList(@Valid UserSearchDTO dto,
+                                                      @RequestParam(defaultValue = SystemConstants.DEFAULT_PAGE_NUM) @Min(value = 1, message = "页码必须大于等于1") Integer pageNum,
+                                                      @RequestParam(defaultValue = SystemConstants.DEFAULT_PAGE_SIZE) @Min(value = 1, message = "每页条数必须大于等于1") @Max(value = 100, message = "每页条数不能超过100") Integer pageSize) {
         PageResult<UserPageVO> page = sysUserService.getUserPage(dto, pageNum, pageSize);
         return Result.success(page);
     }
@@ -63,7 +70,7 @@ public class SysUserController {
     @Operation(summary = "增加一个用户", description = "传入VO，增加一个对象")
     @PostMapping("/add")
     @PreAuthorize("hasAuthority('sys:user:add')")
-    public Result<String> addUser(@RequestBody UserAddDTO userAddDTO) {
+    public Result<String> addUser(@Valid @RequestBody UserAddDTO userAddDTO) {
         sysUserService.saveUser(userAddDTO);
         //失败都在serviceImpl中拦截，这里只处理成功
         return Result.success("新增用户成功");
@@ -73,7 +80,7 @@ public class SysUserController {
     @Operation(summary = "修改用户信息", description = "通过传入VO修改，VO的属性选择性传入就可以，Id必传")
     @PostMapping("/modify")
     @PreAuthorize("hasAuthority('sys:user:edit')")
-    public Result<Boolean> editUser(@RequestBody UserUpdateDTO userUpdateDTO) {
+    public Result<Boolean> editUser(@Valid @RequestBody UserUpdateDTO userUpdateDTO) {
         sysUserService.editUser(userUpdateDTO);
         return Result.success(true);
     }
@@ -85,7 +92,7 @@ public class SysUserController {
     @Operation(summary = "删除一个用户(逻辑删除)", description = "逻辑删除")
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('sys:user:remove')")
-    public Result<String> deleteUser(@PathVariable Long id) {
+    public Result<String> deleteUser(@PathVariable @Min(value = 1, message = "用户ID必须大于等于1") Long id) {
         sysUserService.deleteUser(id);
         return Result.success("删除用户成功");
     }
@@ -97,7 +104,7 @@ public class SysUserController {
     @Operation(summary = "物理删除用户(管理员)", description = "物理删除")
     @DeleteMapping("/delete_admin/{id}")
     @PreAuthorize("hasAuthority('sys:user:physicalDel')")
-    public Result<Boolean> adminPhysicalDeleteUser(@PathVariable Long id) {
+    public Result<Boolean> adminPhysicalDeleteUser(@PathVariable @Min(value = 1, message = "用户ID必须大于等于1") Long id) {
         sysUserService.adminPhysicalDeleteUser(id);
         return Result.success(true);
     }
