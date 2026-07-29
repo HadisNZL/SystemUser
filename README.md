@@ -158,6 +158,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 | `/sys/user/search_list` | GET | `sys:user:list` |
 | `/sys/user/status` | PUT | `sys:user:status` |
 | `/sys/user/reset-password` | PUT | `sys:user:resetPwd` |
+| `/sys/user/change-password` | PUT | 登录用户 |
 | `/sys/user/add` | POST | `sys:user:add` |
 | `/sys/user/modify` | POST | `sys:user:edit` |
 | `/sys/user/delete/{id}` | DELETE | `sys:user:remove` |
@@ -172,6 +173,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `UserUpdateDTO`：修改用户入参，不直接修改密码
 - `UserStatusDTO`：启用 / 禁用用户入参，只包含 `id/status`
 - `UserResetPasswordDTO`：管理员重置用户密码入参，只包含 `id/newPassword`
+- `UserChangePasswordDTO`：当前用户修改自己的密码入参，包含 `oldPassword/newPassword`
 - `UserSearchDTO`：查询条件
 - `UserPageVO`：用户分页返回对象，不包含密码
 - `UserDetailVO`：用户详情返回对象，不包含密码、逻辑删除、版本号

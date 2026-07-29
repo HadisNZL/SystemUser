@@ -8,6 +8,7 @@ import com.system.common.ResultCode;
 import com.system.common.SystemConstants;
 import com.system.convert.UserConvert;
 import com.system.dto.UserAddDTO;
+import com.system.dto.UserChangePasswordDTO;
 import com.system.dto.UserResetPasswordDTO;
 import com.system.dto.UserSearchDTO;
 import com.system.dto.UserStatusDTO;
@@ -18,6 +19,8 @@ import com.system.service.SysUserService;
 import com.system.vo.UserDetailVO;
 import com.system.vo.UserPageVO;
 import jakarta.annotation.Resource;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -170,6 +173,27 @@ public class SysUserServiceImpl implements SysUserService {
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changePassword(UserChangePasswordDTO changePasswordDTO) {
+        Long userId = getCurrentUserId();
+        SysUser dbUser = sysUserMapper.selectById(userId);
+        if (dbUser == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "用户不存在");
+        }
+        if (!passwordEncoder.matches(changePasswordDTO.getOldPassword(), dbUser.getPassword())) {
+            throw new BusinessException("旧密码错误");
+        }
+        if (passwordEncoder.matches(changePasswordDTO.getNewPassword(), dbUser.getPassword())) {
+            throw new BusinessException("新密码不能与旧密码相同");
+        }
+        dbUser.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
+        int rows = sysUserMapper.updateById(dbUser);
+        if (rows <= 0) {
+            throw new BusinessException(ResultCode.OPTIMISTIC_LOCK_ERROR, SystemConstants.OPTIMISTIC_LOCK_MSG);
+        }
+    }
+
     /**
      * 删除一条数据
      * MyBatis-Plus操作 deleteById(id)
@@ -213,6 +237,14 @@ public class SysUserServiceImpl implements SysUserService {
         if (rows <= 0) {
             throw new BusinessException("物理删除失败，ID不存在");
         }
+    }
+
+    private Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || authentication.getName() == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
+        return Long.valueOf(authentication.getName());
     }
 
 }

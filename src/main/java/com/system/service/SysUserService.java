@@ -2,6 +2,7 @@ package com.system.service;
 
 import com.system.common.PageResult;
 import com.system.dto.UserAddDTO;
+import com.system.dto.UserChangePasswordDTO;
 import com.system.dto.UserResetPasswordDTO;
 import com.system.dto.UserSearchDTO;
 import com.system.dto.UserStatusDTO;
@@ -26,6 +27,8 @@ public interface SysUserService {
     void updateUserStatus(UserStatusDTO userStatusDTO);
 
     void resetPassword(UserResetPasswordDTO resetPasswordDTO);
+
+    void changePassword(UserChangePasswordDTO changePasswordDTO);
 
     /**
      * 删除一条数据
