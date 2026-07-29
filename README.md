@@ -22,9 +22,11 @@
 - Spring Security 无状态认证
 - `@PreAuthorize` 接口级权限控制
 - RBAC 五表权限模型
-- 用户列表、分页查询、新增、修改、逻辑删除、物理删除
+- 用户分页查询、新增、修改、逻辑删除、物理删除
 - MyBatis-Plus 分页、逻辑删除、乐观锁、自动填充
 - Knife4j / OpenAPI 文档
+- Jakarta Validation 参数校验
+- 统一响应码与全局异常处理
 - DTO / VO / Entity 分层
 
 ## 项目结构
@@ -149,7 +151,6 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 
 | 接口 | 方法 | 权限 |
 | --- | --- | --- |
-| `/sys/user/list` | GET | `sys:user:list` |
 | `/sys/user/search_list` | GET | `sys:user:list` |
 | `/sys/user/add` | POST | `sys:user:add` |
 | `/sys/user/modify` | POST | `sys:user:edit` |
@@ -168,6 +169,19 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `SysUser`：数据库实体，不直接作为主要响应对象暴露
 
 原则：入参用 DTO，出参用 VO，数据库映射用 Entity。
+
+## 响应码约定
+
+统一响应码定义在 `ResultCode`：
+
+```text
+200 操作成功
+400 参数错误
+401 未登录或登录已失效
+403 没有访问该接口的权限
+500 系统异常
+10001+ 业务错误
+```
 
 ## 构建命令
 

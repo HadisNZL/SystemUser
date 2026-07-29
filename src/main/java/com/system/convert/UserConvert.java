@@ -7,6 +7,7 @@ import com.system.entity.SysUser;
 import com.system.vo.UserPageVO;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
@@ -17,9 +18,13 @@ public interface UserConvert {
     // 如果名字不一致，可以用 @Mapping(source = "源字段", target = "目标字段") 手动指定
     UserPageVO convertUserPageVO(SysUser sysUser);
 
-    // UserPageVO 转 SysUser (新增的反向方法)
-    SysUser convert(UserPageVO userVO);
     // UserAddDTO 转 SysUser (新增的反向方法)
+    //在把 UserAddDTO 转换成 SysUser 时，忽略掉 id、createTime 等几个字段，不进行复制。
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createTime", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "deleteFlag", ignore = true)
+    @Mapping(target = "version", ignore = true)
     SysUser convertUserAddDTO(UserAddDTO userAddDTO);
 
     /**
@@ -28,5 +33,12 @@ public interface UserConvert {
      * 作用：当 UserPageVO 中的属性为 null 时，不覆盖 dbUser 原本的值
      */
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "username", ignore = true)
+    @Mapping(target = "password", ignore = true)
+    @Mapping(target = "createTime", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "deleteFlag", ignore = true)
+    @Mapping(target = "version", ignore = true)
     void updateEntityFromVO(UserUpdateDTO userUpdateDTO, @MappingTarget SysUser dbUser);
 }

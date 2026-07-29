@@ -52,15 +52,6 @@ public class SysUserServiceImpl implements SysUserService {
     @Resource
     private PasswordEncoder passwordEncoder;
 
-    @Override
-    public List<SysUser> findUserList() {
-        // 只查询未删除数据
-//        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
-        //因为写了TableLogic字段，和配置了全局application.yaml就不需要下面这一行了
-//        wrapper.eq(SysUser::getDeleteFlag, 0);
-        return sysUserMapper.selectList(null);
-    }
-
     /**
      * LambdaQueryWrapper用法
      */

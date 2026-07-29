@@ -6,7 +6,6 @@ import com.system.common.SystemConstants;
 import com.system.dto.UserAddDTO;
 import com.system.dto.UserSearchDTO;
 import com.system.dto.UserUpdateDTO;
-import com.system.entity.SysUser;
 import com.system.service.SysUserService;
 import com.system.vo.UserPageVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,11 +18,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 /**
- * sys:user:list        获取用户列表
- * sys:user:search      获取用户分页列表
+ * sys:user:list        获取用户分页列表
  * sys:user:add         新增用户
  * sys:user:edit        修改用户
  * sys:user:remove      逻辑删除用户
@@ -38,15 +34,6 @@ public class SysUserController {
 
     @Resource
     private SysUserService sysUserService;
-
-    @Operation(summary = "获取用户列表", description = "用户列表的查询")
-    @GetMapping("/list")
-    @PreAuthorize("hasAuthority('sys:user:list')")
-    public Result<List<SysUser>> userList() {
-        List<SysUser> list = sysUserService.findUserList();
-        return Result.success(list);
-    }
-
 
     // MP分页接口 关联LambdaQueryWrapper条件查询
     //e.g.带dto任何字段都可以 GET http://localhost:8080/page?username=test&status=1&pageNum=2&pageSize=10

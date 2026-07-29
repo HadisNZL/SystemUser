@@ -4,14 +4,9 @@ import com.system.common.PageResult;
 import com.system.dto.UserAddDTO;
 import com.system.dto.UserSearchDTO;
 import com.system.dto.UserUpdateDTO;
-import com.system.entity.SysUser;
 import com.system.vo.UserPageVO;
 
-import java.util.List;
-
 public interface SysUserService {
-
-    List<SysUser> findUserList();
 
     //  多条件查询
     PageResult<UserPageVO> getUserPage(UserSearchDTO dto, Integer pageNum, Integer pageSize);
