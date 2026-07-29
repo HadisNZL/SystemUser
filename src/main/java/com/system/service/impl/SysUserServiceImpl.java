@@ -8,6 +8,7 @@ import com.system.common.ResultCode;
 import com.system.common.SystemConstants;
 import com.system.convert.UserConvert;
 import com.system.dto.UserAddDTO;
+import com.system.dto.UserResetPasswordDTO;
 import com.system.dto.UserSearchDTO;
 import com.system.dto.UserStatusDTO;
 import com.system.dto.UserUpdateDTO;
@@ -149,6 +150,20 @@ public class SysUserServiceImpl implements SysUserService {
             throw new BusinessException(ResultCode.DATA_NOT_FOUND, "用户不存在");
         }
         dbUser.setStatus(userStatusDTO.getStatus());
+        int rows = sysUserMapper.updateById(dbUser);
+        if (rows <= 0) {
+            throw new BusinessException(ResultCode.OPTIMISTIC_LOCK_ERROR, SystemConstants.OPTIMISTIC_LOCK_MSG);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void resetPassword(UserResetPasswordDTO resetPasswordDTO) {
+        SysUser dbUser = sysUserMapper.selectById(resetPasswordDTO.getId());
+        if (dbUser == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "用户不存在");
+        }
+        dbUser.setPassword(passwordEncoder.encode(resetPasswordDTO.getNewPassword()));
         int rows = sysUserMapper.updateById(dbUser);
         if (rows <= 0) {
             throw new BusinessException(ResultCode.OPTIMISTIC_LOCK_ERROR, SystemConstants.OPTIMISTIC_LOCK_MSG);

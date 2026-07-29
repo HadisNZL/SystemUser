@@ -4,6 +4,7 @@ import com.system.common.PageResult;
 import com.system.common.Result;
 import com.system.common.SystemConstants;
 import com.system.dto.UserAddDTO;
+import com.system.dto.UserResetPasswordDTO;
 import com.system.dto.UserSearchDTO;
 import com.system.dto.UserStatusDTO;
 import com.system.dto.UserUpdateDTO;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
  * sys:user:list        获取用户分页列表
  * sys:user:detail      获取用户详情
  * sys:user:status      启用/禁用用户
+ * sys:user:resetPwd    重置用户密码
  * sys:user:add         新增用户
  * sys:user:edit        修改用户
  * sys:user:remove      逻辑删除用户
@@ -89,6 +91,14 @@ public class SysUserController {
     @PreAuthorize("hasAuthority('sys:user:status')")
     public Result<Boolean> updateUserStatus(@Valid @RequestBody UserStatusDTO userStatusDTO) {
         sysUserService.updateUserStatus(userStatusDTO);
+        return Result.success(true);
+    }
+
+    @Operation(summary = "重置用户密码", description = "管理员重置指定用户密码")
+    @PutMapping("/reset-password")
+    @PreAuthorize("hasAuthority('sys:user:resetPwd')")
+    public Result<Boolean> resetPassword(@Valid @RequestBody UserResetPasswordDTO resetPasswordDTO) {
+        sysUserService.resetPassword(resetPasswordDTO);
         return Result.success(true);
     }
 

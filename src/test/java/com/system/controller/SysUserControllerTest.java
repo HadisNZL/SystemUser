@@ -77,6 +77,37 @@ class SysUserControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(false));
     }
 
+    @Test
+    void resetPasswordShouldReturnSuccess() throws Exception {
+        mockMvc.perform(put("/sys/user/reset-password")
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "id": 1,
+                                  "newPassword": "654321"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.data").value(true));
+    }
+
+    @Test
+    void resetPasswordShouldValidatePasswordLength() throws Exception {
+        mockMvc.perform(put("/sys/user/reset-password")
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "id": 1,
+                                  "newPassword": "123"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.isSuccess").value(false));
+    }
+
     private Validator validator() {
         LocalValidatorFactoryBean validatorFactoryBean = new LocalValidatorFactoryBean();
         validatorFactoryBean.afterPropertiesSet();
@@ -116,6 +147,10 @@ class SysUserControllerTest {
 
         @Override
         public void updateUserStatus(com.system.dto.UserStatusDTO userStatusDTO) {
+        }
+
+        @Override
+        public void resetPassword(com.system.dto.UserResetPasswordDTO resetPasswordDTO) {
         }
 
         @Override

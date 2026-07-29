@@ -75,6 +75,7 @@ admin 用户要访问用户管理接口，至少需要这些权限：
 sys:user:list
 sys:user:detail
 sys:user:status
+sys:user:resetPwd
 sys:user:add
 sys:user:edit
 sys:user:remove
@@ -156,6 +157,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 | `/sys/user/{id}` | GET | `sys:user:detail` |
 | `/sys/user/search_list` | GET | `sys:user:list` |
 | `/sys/user/status` | PUT | `sys:user:status` |
+| `/sys/user/reset-password` | PUT | `sys:user:resetPwd` |
 | `/sys/user/add` | POST | `sys:user:add` |
 | `/sys/user/modify` | POST | `sys:user:edit` |
 | `/sys/user/delete/{id}` | DELETE | `sys:user:remove` |
@@ -169,6 +171,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `UserAddDTO`：新增用户入参，包含 `password`
 - `UserUpdateDTO`：修改用户入参，不直接修改密码
 - `UserStatusDTO`：启用 / 禁用用户入参，只包含 `id/status`
+- `UserResetPasswordDTO`：管理员重置用户密码入参，只包含 `id/newPassword`
 - `UserSearchDTO`：查询条件
 - `UserPageVO`：用户分页返回对象，不包含密码
 - `UserDetailVO`：用户详情返回对象，不包含密码、逻辑删除、版本号
