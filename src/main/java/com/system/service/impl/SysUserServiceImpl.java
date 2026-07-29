@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.system.common.BusinessException;
 import com.system.common.PageResult;
+import com.system.common.ResultCode;
 import com.system.common.SystemConstants;
 import com.system.convert.UserConvert;
 import com.system.dto.UserAddDTO;
@@ -123,7 +124,7 @@ public class SysUserServiceImpl implements SysUserService {
         // 1. 先查库，拿到当前最新version
         SysUser dbUser = sysUserMapper.selectById(userUpdateDTO.getId());
         if (dbUser == null) {
-            throw new BusinessException("用户不存在");
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "用户不存在");
         }
         // 2. 利用 MapStruct 直接合并：
         // 会自动把 userUpdateDTO 里不为 null 的字段覆盖到 dbUser 上，
@@ -134,7 +135,7 @@ public class SysUserServiceImpl implements SysUserService {
         // 更新行数为0 = 版本已变更，被别人抢先修改
         if (rows <= 0) {
             // 乐观锁冲突提示
-            throw new BusinessException(SystemConstants.OPTIMISTIC_LOCK_MSG);
+            throw new BusinessException(ResultCode.OPTIMISTIC_LOCK_ERROR, SystemConstants.OPTIMISTIC_LOCK_MSG);
         }
     }
 

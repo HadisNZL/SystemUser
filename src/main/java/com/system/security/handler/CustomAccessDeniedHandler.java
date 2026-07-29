@@ -1,7 +1,8 @@
 package com.system.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.system.common.SecurityResult;
+import com.system.common.Result;
+import com.system.common.ResultCode;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,8 +25,9 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
                        HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException, ServletException {
         response.setContentType("application/json;charset=UTF-8");
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         // 403 登录成功但是没有接口访问权限
-        SecurityResult<Object> result = SecurityResult.fail(403, "没有访问该接口的权限");
+        Result<Object> result = Result.fail(ResultCode.FORBIDDEN);
         response.getWriter().write(MAPPER.writeValueAsString(result));
     }
 }

@@ -1,7 +1,8 @@
 package com.system.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.system.common.SecurityResult;
+import com.system.common.Result;
+import com.system.common.ResultCode;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -24,8 +25,9 @@ public class CustomAuthEntryPoint implements AuthenticationEntryPoint {
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException, ServletException {
         response.setContentType("application/json;charset=UTF-8");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         // 401 未登录 / token非法/过期
-        SecurityResult<Object> result = SecurityResult.fail(401, "登录已失效，请重新登录");
+        Result<Object> result = Result.fail(ResultCode.UNAUTHORIZED);
         response.getWriter().write(MAPPER.writeValueAsString(result));
     }
 }

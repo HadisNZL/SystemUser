@@ -2,6 +2,7 @@ package com.system.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.system.common.BusinessException;
+import com.system.common.ResultCode;
 import com.system.common.SystemConstants;
 import com.system.dto.LoginDTO;
 import com.system.entity.SysUser;
@@ -33,13 +34,13 @@ public class LoginServiceImpl implements LoginService {
         wrapper.eq(SysUser::getUsername, loginDTO.getUsername());
         SysUser user = sysUserMapper.selectOne(wrapper);
         if (user == null) {
-            throw new BusinessException("账号不存在");
+            throw new BusinessException(ResultCode.LOGIN_FAIL);
         }
         if (SystemConstants.USER_DISABLE.equals(user.getStatus())) {
-            throw new BusinessException("账号已被禁用");
+            throw new BusinessException(ResultCode.USER_DISABLED);
         }
         if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
-            throw new BusinessException("账号或密码错误");
+            throw new BusinessException(ResultCode.LOGIN_FAIL);
         }
         // 签发令牌
         return jwtUtil.generateToken(user.getId());
