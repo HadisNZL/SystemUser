@@ -82,6 +82,16 @@ sys:user:remove
 sys:user:physicalDel
 ```
 
+角色管理接口需要这些权限：
+
+```text
+sys:role:list
+sys:role:add
+sys:role:edit
+sys:role:status
+sys:role:remove
+```
+
 ## 密码说明
 
 数据库中的 `sys_user.password` 必须存 BCrypt 密文，不能存明文 `123456`。
@@ -163,6 +173,11 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 | `/sys/user/modify` | POST | `sys:user:edit` |
 | `/sys/user/delete/{id}` | DELETE | `sys:user:remove` |
 | `/sys/user/delete_admin/{id}` | DELETE | `sys:user:physicalDel` |
+| `/sys/role/search_list` | GET | `sys:role:list` |
+| `/sys/role/add` | POST | `sys:role:add` |
+| `/sys/role/modify` | POST | `sys:role:edit` |
+| `/sys/role/status` | PUT | `sys:role:status` |
+| `/sys/role/delete/{id}` | DELETE | `sys:role:remove` |
 
 新增用户使用 `UserAddDTO`，需要传 `password`。查询返回使用 `UserPageVO`，不返回密码。
 
@@ -219,6 +234,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `PasswordEncoderTests`：生成并校验 BCrypt 密文
 - `LoginControllerTest`：登录接口成功响应、参数校验
 - `SysUserControllerTest`：用户详情响应不暴露敏感字段
+- `SysRoleControllerTest`：角色分页、新增、修改、删除接口响应
 - `SecurityHandlerTest`：未登录 401、无权限 403 返回
 - `AdminSystemApplicationTests`：Spring Boot 上下文启动
 
