@@ -2,7 +2,6 @@ package com.system.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.system.entity.SysPermission;
-import com.system.entity.SysUser;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -13,4 +12,6 @@ public interface SysPermissionMapper extends BaseMapper<SysPermission> {
      * 根据用户ID查询该用户所有有效的权限标识集合
      */
     List<String> selectUserPermissionKeys(@Param("userId") Long userId);
+
+    Long countRolePermissionByPermissionId(@Param("permissionId") Long permissionId);
 }

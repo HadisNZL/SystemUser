@@ -93,6 +93,15 @@ sys:role:status
 sys:role:remove
 ```
 
+菜单权限管理接口需要这些权限：
+
+```text
+sys:menu:list
+sys:menu:add
+sys:menu:edit
+sys:menu:remove
+```
+
 ## 密码说明
 
 数据库中的 `sys_user.password` 必须存 BCrypt 密文，不能存明文 `123456`。
@@ -181,6 +190,10 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 | `/sys/role/modify` | POST | `sys:role:edit` |
 | `/sys/role/status` | PUT | `sys:role:status` |
 | `/sys/role/delete/{id}` | DELETE | `sys:role:remove` |
+| `/sys/menu/tree` | GET | `sys:menu:list` |
+| `/sys/menu/add` | POST | `sys:menu:add` |
+| `/sys/menu/modify` | POST | `sys:menu:edit` |
+| `/sys/menu/delete/{id}` | DELETE | `sys:menu:remove` |
 
 新增用户使用 `UserAddDTO`，需要传 `password`。查询返回使用 `UserPageVO`，不返回密码。
 
@@ -193,6 +206,9 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `UserResetPasswordDTO`：管理员重置用户密码入参，只包含 `id/newPassword`
 - `UserChangePasswordDTO`：当前用户修改自己的密码入参，包含 `oldPassword/newPassword`
 - `UserSearchDTO`：查询条件
+- `MenuAddDTO`：新增目录、菜单、按钮权限入参
+- `MenuUpdateDTO`：修改目录、菜单、按钮权限入参
+- `MenuTreeVO`：菜单权限树返回对象，包含 `children`
 - `UserPageVO`：用户分页返回对象，不包含密码
 - `UserDetailVO`：用户详情返回对象，不包含密码、逻辑删除、版本号
 - `SysUser`：数据库实体，不直接作为主要响应对象暴露

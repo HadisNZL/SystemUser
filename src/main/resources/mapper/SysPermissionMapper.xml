@@ -20,4 +20,10 @@
           AND r.delete_flag = 0
           AND r.status = 1
     </select>
+
+    <select id="countRolePermissionByPermissionId" resultType="java.lang.Long">
+        SELECT COUNT(1)
+        FROM sys_role_permission
+        WHERE permission_id = #{permissionId}
+    </select>
 </mapper>
