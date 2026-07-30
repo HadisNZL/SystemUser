@@ -10,6 +10,8 @@ public interface SysMenuService {
 
     List<MenuTreeVO> getMenuTree();
 
+    List<MenuTreeVO> getCurrentUserMenuTree();
+
     void saveMenu(MenuAddDTO menuAddDTO);
 
     void editMenu(MenuUpdateDTO menuUpdateDTO);

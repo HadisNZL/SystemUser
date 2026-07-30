@@ -47,6 +47,15 @@ class SysMenuControllerTest {
     }
 
     @Test
+    void getCurrentUserMenuTreeShouldReturnMenus() throws Exception {
+        mockMvc.perform(get("/sys/menu/current"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data[0].name").value("系统管理"))
+                .andExpect(jsonPath("$.data[0].children[0].name").value("用户管理"));
+    }
+
+    @Test
     void addMenuShouldReturnSuccess() throws Exception {
         mockMvc.perform(post("/sys/menu/add")
                         .contentType("application/json")
@@ -132,6 +141,14 @@ class SysMenuControllerTest {
             MenuTreeVO user = buildMenu(2L, 1L, "用户管理", "", 2);
             MenuTreeVO list = buildMenu(3L, 2L, "用户列表", "sys:user:list", 3);
             user.getChildren().add(list);
+            system.getChildren().add(user);
+            return List.of(system);
+        }
+
+        @Override
+        public List<MenuTreeVO> getCurrentUserMenuTree() {
+            MenuTreeVO system = buildMenu(1L, 0L, "系统管理", "", 1);
+            MenuTreeVO user = buildMenu(2L, 1L, "用户管理", "", 2);
             system.getChildren().add(user);
             return List.of(system);
         }

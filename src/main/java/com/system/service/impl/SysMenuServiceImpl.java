@@ -10,6 +10,7 @@ import com.system.dto.MenuUpdateDTO;
 import com.system.entity.SysPermission;
 import com.system.mapper.SysPermissionMapper;
 import com.system.service.SysMenuService;
+import com.system.util.SecurityUtil;
 import com.system.vo.MenuTreeVO;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,15 @@ public class SysMenuServiceImpl implements SysMenuService {
                 .orderByAsc(SysPermission::getSort)
                 .orderByAsc(SysPermission::getId));
         List<MenuTreeVO> menuList = permissions.stream()
+                .map(menuConvert::convertMenuTreeVO)
+                .collect(Collectors.toList());
+        return buildTree(menuList);
+    }
+
+    @Override
+    public List<MenuTreeVO> getCurrentUserMenuTree() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        List<MenuTreeVO> menuList = sysPermissionMapper.selectCurrentUserMenus(userId).stream()
                 .map(menuConvert::convertMenuTreeVO)
                 .collect(Collectors.toList());
         return buildTree(menuList);

@@ -39,6 +39,14 @@ public class SysMenuController {
         return Result.success(menuTree);
     }
 
+    @Operation(summary = "获取当前用户菜单树", description = "返回当前登录用户可见的目录和菜单")
+    @GetMapping("/current")
+    @PreAuthorize("isAuthenticated()")
+    public Result<List<MenuTreeVO>> getCurrentUserMenuTree() {
+        List<MenuTreeVO> menuTree = sysMenuService.getCurrentUserMenuTree();
+        return Result.success(menuTree);
+    }
+
     @Operation(summary = "新增菜单权限", description = "新增目录、菜单或按钮权限")
     @PostMapping("/add")
     @PreAuthorize("hasAuthority('sys:menu:add')")

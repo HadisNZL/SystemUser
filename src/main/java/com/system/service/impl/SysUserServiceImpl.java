@@ -22,12 +22,11 @@ import com.system.mapper.SysRoleMapper;
 import com.system.mapper.SysUserMapper;
 import com.system.mapper.SysUserRoleMapper;
 import com.system.service.SysUserService;
+import com.system.util.SecurityUtil;
 import com.system.vo.RolePageVO;
 import com.system.vo.UserDetailVO;
 import com.system.vo.UserPageVO;
 import jakarta.annotation.Resource;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -192,7 +191,7 @@ public class SysUserServiceImpl implements SysUserService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void changePassword(UserChangePasswordDTO changePasswordDTO) {
-        Long userId = getCurrentUserId();
+        Long userId = SecurityUtil.getCurrentUserId();
         SysUser dbUser = sysUserMapper.selectById(userId);
         if (dbUser == null) {
             throw new BusinessException(ResultCode.DATA_NOT_FOUND, "用户不存在");
@@ -284,14 +283,6 @@ public class SysUserServiceImpl implements SysUserService {
         if (rows <= 0) {
             throw new BusinessException("物理删除失败，ID不存在");
         }
-    }
-
-    private Long getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || authentication.getName() == null) {
-            throw new BusinessException(ResultCode.UNAUTHORIZED);
-        }
-        return Long.valueOf(authentication.getName());
     }
 
     private void checkUserExists(Long id) {

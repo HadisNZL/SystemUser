@@ -193,7 +193,9 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 | `/sys/role/{id}/permissions` | GET | `sys:role:assignPermission` |
 | `/sys/role/{id}/permissions` | PUT | `sys:role:assignPermission` |
 | `/sys/role/delete/{id}` | DELETE | `sys:role:remove` |
+| `/sys/profile` | GET | 登录用户 |
 | `/sys/menu/tree` | GET | `sys:menu:list` |
+| `/sys/menu/current` | GET | 登录用户 |
 | `/sys/menu/add` | POST | `sys:menu:add` |
 | `/sys/menu/modify` | POST | `sys:menu:edit` |
 | `/sys/menu/delete/{id}` | DELETE | `sys:menu:remove` |
@@ -210,6 +212,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `UserChangePasswordDTO`：当前用户修改自己的密码入参，包含 `oldPassword/newPassword`
 - `UserSearchDTO`：查询条件
 - `RoleAssignPermissionDTO`：角色分配权限入参，空数组表示清空权限
+- `ProfileVO`：当前登录用户信息，包含用户、角色、权限标识
 - `MenuAddDTO`：新增目录、菜单、按钮权限入参
 - `MenuUpdateDTO`：修改目录、菜单、按钮权限入参
 - `MenuTreeVO`：菜单权限树返回对象，包含 `children`
