@@ -17,6 +17,9 @@
                  INNER JOIN sys_role r ON ur.role_id = r.id
         WHERE ur.user_id = #{userId}
           AND p.delete_flag = 0
+          AND p.status = 1
+          AND p.permission_key IS NOT NULL
+          AND p.permission_key != ''
           AND r.delete_flag = 0
           AND r.status = 1
     </select>
@@ -25,5 +28,31 @@
         SELECT COUNT(1)
         FROM sys_role_permission
         WHERE permission_id = #{permissionId}
+    </select>
+
+    <select id="selectPermissionsByRoleId" resultType="com.system.entity.SysPermission">
+        SELECT DISTINCT p.id,
+                        p.parent_id,
+                        p.name,
+                        p.menu_path,
+                        p.permission_key,
+                        p.type,
+                        p.sort,
+                        p.create_time,
+                        p.update_time,
+                        p.delete_flag,
+                        p.icon,
+                        p.component,
+                        p.visible,
+                        p.status,
+                        p.redirect,
+                        p.is_cache,
+                        p.is_frame,
+                        p.remark
+        FROM sys_permission p
+                 INNER JOIN sys_role_permission rp ON p.id = rp.permission_id
+        WHERE rp.role_id = #{roleId}
+          AND p.delete_flag = 0
+        ORDER BY p.parent_id ASC, p.sort ASC, p.id ASC
     </select>
 </mapper>

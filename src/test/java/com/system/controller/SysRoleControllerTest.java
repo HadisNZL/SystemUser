@@ -2,10 +2,12 @@ package com.system.controller;
 
 import com.system.common.GlobalExceptionHandler;
 import com.system.common.PageResult;
+import com.system.dto.RoleAssignPermissionDTO;
 import com.system.dto.RoleAddDTO;
 import com.system.dto.RoleSearchDTO;
 import com.system.dto.RoleUpdateDTO;
 import com.system.service.SysRoleService;
+import com.system.vo.MenuTreeVO;
 import com.system.vo.RolePageVO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -158,6 +160,41 @@ class SysRoleControllerTest {
     }
 
     @Test
+    void getRolePermissionsShouldReturnTree() throws Exception {
+        mockMvc.perform(get("/sys/role/1/permissions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data[0].name").value("系统管理"))
+                .andExpect(jsonPath("$.data[0].children[0].name").value("用户管理"))
+                .andExpect(jsonPath("$.data[0].children[0].children[0].permissionKey").value("sys:user:list"));
+    }
+
+    @Test
+    void assignRolePermissionsShouldReturnSuccess() throws Exception {
+        mockMvc.perform(put("/sys/role/1/permissions")
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "permissionIds": [1, 2, 3]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.data").value(true));
+    }
+
+    @Test
+    void assignRolePermissionsShouldValidatePermissionIds() throws Exception {
+        mockMvc.perform(put("/sys/role/1/permissions")
+                        .contentType("application/json")
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.isSuccess").value(false));
+    }
+
+    @Test
     void deleteRoleShouldReturnSuccess() throws Exception {
         mockMvc.perform(delete("/sys/role/delete/1"))
                 .andExpect(status().isOk())
@@ -198,7 +235,36 @@ class SysRoleControllerTest {
         }
 
         @Override
+        public List<MenuTreeVO> getRolePermissions(Long id) {
+            MenuTreeVO system = buildMenu(1L, 0L, "系统管理", "", 1);
+            MenuTreeVO user = buildMenu(2L, 1L, "用户管理", "", 2);
+            MenuTreeVO list = buildMenu(3L, 2L, "用户列表", "sys:user:list", 3);
+            user.getChildren().add(list);
+            system.getChildren().add(user);
+            return List.of(system);
+        }
+
+        @Override
+        public void assignRolePermissions(Long id, RoleAssignPermissionDTO roleAssignPermissionDTO) {
+        }
+
+        @Override
         public void deleteRole(Long id) {
+        }
+
+        private MenuTreeVO buildMenu(Long id, Long parentId, String name, String permissionKey, Integer type) {
+            MenuTreeVO vo = new MenuTreeVO();
+            vo.setId(id);
+            vo.setParentId(parentId);
+            vo.setName(name);
+            vo.setPermissionKey(permissionKey);
+            vo.setType(type);
+            vo.setSort(1);
+            vo.setVisible(1);
+            vo.setStatus(1);
+            vo.setCreateTime(LocalDateTime.of(2026, 7, 30, 14, 0));
+            vo.setUpdateTime(LocalDateTime.of(2026, 7, 30, 14, 0));
+            return vo;
         }
     }
 }

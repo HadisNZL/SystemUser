@@ -3,11 +3,13 @@ package com.system.controller;
 import com.system.common.PageResult;
 import com.system.common.Result;
 import com.system.common.SystemConstants;
+import com.system.dto.RoleAssignPermissionDTO;
 import com.system.dto.RoleAddDTO;
 import com.system.dto.RoleSearchDTO;
 import com.system.dto.RoleStatusDTO;
 import com.system.dto.RoleUpdateDTO;
 import com.system.service.SysRoleService;
+import com.system.vo.MenuTreeVO;
 import com.system.vo.RolePageVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,6 +28,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Tag(name = "角色管理模块", description = "提供角色的分页查询、新增、修改、删除接口")
 @RestController
@@ -67,6 +71,23 @@ public class SysRoleController {
     @PreAuthorize("hasAuthority('sys:role:status')")
     public Result<Boolean> updateRoleStatus(@Valid @RequestBody RoleStatusDTO roleStatusDTO) {
         sysRoleService.updateRoleStatus(roleStatusDTO);
+        return Result.success(true);
+    }
+
+    @Operation(summary = "查询角色权限", description = "查询角色已绑定的菜单权限树")
+    @GetMapping("/{id}/permissions")
+    @PreAuthorize("hasAuthority('sys:role:assignPermission')")
+    public Result<List<MenuTreeVO>> getRolePermissions(@PathVariable @Min(value = 1, message = "角色ID必须大于等于1") Long id) {
+        List<MenuTreeVO> permissions = sysRoleService.getRolePermissions(id);
+        return Result.success(permissions);
+    }
+
+    @Operation(summary = "给角色分配权限", description = "传入权限ID列表，空数组表示清空角色权限")
+    @PutMapping("/{id}/permissions")
+    @PreAuthorize("hasAuthority('sys:role:assignPermission')")
+    public Result<Boolean> assignRolePermissions(@PathVariable @Min(value = 1, message = "角色ID必须大于等于1") Long id,
+                                                 @Valid @RequestBody RoleAssignPermissionDTO roleAssignPermissionDTO) {
+        sysRoleService.assignRolePermissions(id, roleAssignPermissionDTO);
         return Result.success(true);
     }
 

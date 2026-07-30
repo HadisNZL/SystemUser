@@ -91,6 +91,7 @@ sys:role:add
 sys:role:edit
 sys:role:status
 sys:role:remove
+sys:role:assignPermission
 ```
 
 菜单权限管理接口需要这些权限：
@@ -189,6 +190,8 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 | `/sys/role/add` | POST | `sys:role:add` |
 | `/sys/role/modify` | POST | `sys:role:edit` |
 | `/sys/role/status` | PUT | `sys:role:status` |
+| `/sys/role/{id}/permissions` | GET | `sys:role:assignPermission` |
+| `/sys/role/{id}/permissions` | PUT | `sys:role:assignPermission` |
 | `/sys/role/delete/{id}` | DELETE | `sys:role:remove` |
 | `/sys/menu/tree` | GET | `sys:menu:list` |
 | `/sys/menu/add` | POST | `sys:menu:add` |
@@ -206,6 +209,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `UserResetPasswordDTO`：管理员重置用户密码入参，只包含 `id/newPassword`
 - `UserChangePasswordDTO`：当前用户修改自己的密码入参，包含 `oldPassword/newPassword`
 - `UserSearchDTO`：查询条件
+- `RoleAssignPermissionDTO`：角色分配权限入参，空数组表示清空权限
 - `MenuAddDTO`：新增目录、菜单、按钮权限入参
 - `MenuUpdateDTO`：修改目录、菜单、按钮权限入参
 - `MenuTreeVO`：菜单权限树返回对象，包含 `children`
