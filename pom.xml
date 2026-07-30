@@ -111,6 +111,12 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- AOP 切面，用于操作日志等横切能力 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
         <!--        spring-boot-starter-webmvc-test → 改成
           spring-boot-starter-test -->
         <dependency>

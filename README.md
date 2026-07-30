@@ -7,6 +7,7 @@
 - JDK 17
 - Spring Boot 3.5.16
 - Spring Security
+- Spring AOP
 - JJWT 0.12.7
 - MyBatis-Plus 3.5.5
 - MySQL 8.x
@@ -28,6 +29,7 @@
 - Jakarta Validation 参数校验
 - 统一响应码与全局异常处理
 - DTO / VO / Entity 分层
+- 操作日志注解与 AOP 入库
 
 ## 项目结构
 

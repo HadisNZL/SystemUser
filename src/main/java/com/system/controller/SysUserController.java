@@ -3,6 +3,7 @@ package com.system.controller;
 import com.system.common.PageResult;
 import com.system.common.Result;
 import com.system.common.SystemConstants;
+import com.system.annotation.OperationLog;
 import com.system.dto.UserAddDTO;
 import com.system.dto.UserAssignRoleDTO;
 import com.system.dto.UserChangePasswordDTO;
@@ -78,6 +79,7 @@ public class SysUserController {
     @Operation(summary = "增加一个用户", description = "传入VO，增加一个对象")
     @PostMapping("/add")
     @PreAuthorize("hasAuthority('sys:user:add')")
+    @OperationLog(module = "用户管理", operation = "新增用户")
     public Result<String> addUser(@Valid @RequestBody UserAddDTO userAddDTO) {
         sysUserService.saveUser(userAddDTO);
         //失败都在serviceImpl中拦截，这里只处理成功
@@ -88,6 +90,7 @@ public class SysUserController {
     @Operation(summary = "修改用户信息", description = "通过传入VO修改，VO的属性选择性传入就可以，Id必传")
     @PostMapping("/modify")
     @PreAuthorize("hasAuthority('sys:user:edit')")
+    @OperationLog(module = "用户管理", operation = "修改用户")
     public Result<Boolean> editUser(@Valid @RequestBody UserUpdateDTO userUpdateDTO) {
         sysUserService.editUser(userUpdateDTO);
         return Result.success(true);
@@ -96,6 +99,7 @@ public class SysUserController {
     @Operation(summary = "修改用户状态", description = "启用或禁用用户账号")
     @PutMapping("/status")
     @PreAuthorize("hasAuthority('sys:user:status')")
+    @OperationLog(module = "用户管理", operation = "修改用户状态")
     public Result<Boolean> updateUserStatus(@Valid @RequestBody UserStatusDTO userStatusDTO) {
         sysUserService.updateUserStatus(userStatusDTO);
         return Result.success(true);
@@ -104,6 +108,7 @@ public class SysUserController {
     @Operation(summary = "重置用户密码", description = "管理员重置指定用户密码")
     @PutMapping("/reset-password")
     @PreAuthorize("hasAuthority('sys:user:resetPwd')")
+    @OperationLog(module = "用户管理", operation = "重置用户密码")
     public Result<Boolean> resetPassword(@Valid @RequestBody UserResetPasswordDTO resetPasswordDTO) {
         sysUserService.resetPassword(resetPasswordDTO);
         return Result.success(true);
@@ -112,6 +117,7 @@ public class SysUserController {
     @Operation(summary = "修改当前用户密码", description = "当前登录用户修改自己的密码")
     @PutMapping("/change-password")
     @PreAuthorize("isAuthenticated()")
+    @OperationLog(module = "用户管理", operation = "修改当前用户密码")
     public Result<Boolean> changePassword(@Valid @RequestBody UserChangePasswordDTO changePasswordDTO) {
         sysUserService.changePassword(changePasswordDTO);
         return Result.success(true);
@@ -128,6 +134,7 @@ public class SysUserController {
     @Operation(summary = "给用户分配角色", description = "传入角色ID列表，空数组表示清空角色")
     @PutMapping("/{id}/roles")
     @PreAuthorize("hasAuthority('sys:user:assignRole')")
+    @OperationLog(module = "用户管理", operation = "分配用户角色")
     public Result<Boolean> assignUserRoles(@PathVariable @Min(value = 1, message = "用户ID必须大于等于1") Long id,
                                            @Valid @RequestBody UserAssignRoleDTO userAssignRoleDTO) {
         sysUserService.assignUserRoles(id, userAssignRoleDTO);
@@ -141,6 +148,7 @@ public class SysUserController {
     @Operation(summary = "删除一个用户(逻辑删除)", description = "逻辑删除")
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('sys:user:remove')")
+    @OperationLog(module = "用户管理", operation = "逻辑删除用户")
     public Result<String> deleteUser(@PathVariable @Min(value = 1, message = "用户ID必须大于等于1") Long id) {
         sysUserService.deleteUser(id);
         return Result.success("删除用户成功");
@@ -153,6 +161,7 @@ public class SysUserController {
     @Operation(summary = "物理删除用户(管理员)", description = "物理删除")
     @DeleteMapping("/delete_admin/{id}")
     @PreAuthorize("hasAuthority('sys:user:physicalDel')")
+    @OperationLog(module = "用户管理", operation = "物理删除用户")
     public Result<Boolean> adminPhysicalDeleteUser(@PathVariable @Min(value = 1, message = "用户ID必须大于等于1") Long id) {
         sysUserService.adminPhysicalDeleteUser(id);
         return Result.success(true);
