@@ -4,12 +4,14 @@ import com.system.common.PageResult;
 import com.system.common.Result;
 import com.system.common.SystemConstants;
 import com.system.dto.UserAddDTO;
+import com.system.dto.UserAssignRoleDTO;
 import com.system.dto.UserChangePasswordDTO;
 import com.system.dto.UserResetPasswordDTO;
 import com.system.dto.UserSearchDTO;
 import com.system.dto.UserStatusDTO;
 import com.system.dto.UserUpdateDTO;
 import com.system.service.SysUserService;
+import com.system.vo.RolePageVO;
 import com.system.vo.UserDetailVO;
 import com.system.vo.UserPageVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,11 +24,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * sys:user:list        获取用户分页列表
  * sys:user:detail      获取用户详情
  * sys:user:status      启用/禁用用户
  * sys:user:resetPwd    重置用户密码
+ * sys:user:assignRole  分配用户角色
  * authenticated        修改当前用户密码
  * sys:user:add         新增用户
  * sys:user:edit        修改用户
@@ -109,6 +114,23 @@ public class SysUserController {
     @PreAuthorize("isAuthenticated()")
     public Result<Boolean> changePassword(@Valid @RequestBody UserChangePasswordDTO changePasswordDTO) {
         sysUserService.changePassword(changePasswordDTO);
+        return Result.success(true);
+    }
+
+    @Operation(summary = "查询用户已有角色", description = "通过用户ID查询已分配角色")
+    @GetMapping("/{id}/roles")
+    @PreAuthorize("hasAuthority('sys:user:assignRole')")
+    public Result<List<RolePageVO>> getUserRoles(@PathVariable @Min(value = 1, message = "用户ID必须大于等于1") Long id) {
+        List<RolePageVO> roles = sysUserService.getUserRoles(id);
+        return Result.success(roles);
+    }
+
+    @Operation(summary = "给用户分配角色", description = "传入角色ID列表，空数组表示清空角色")
+    @PutMapping("/{id}/roles")
+    @PreAuthorize("hasAuthority('sys:user:assignRole')")
+    public Result<Boolean> assignUserRoles(@PathVariable @Min(value = 1, message = "用户ID必须大于等于1") Long id,
+                                           @Valid @RequestBody UserAssignRoleDTO userAssignRoleDTO) {
+        sysUserService.assignUserRoles(id, userAssignRoleDTO);
         return Result.success(true);
     }
 

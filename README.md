@@ -80,6 +80,7 @@ sys:user:add
 sys:user:edit
 sys:user:remove
 sys:user:physicalDel
+sys:user:assignRole
 ```
 
 角色管理接口需要这些权限：
@@ -169,6 +170,8 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 | `/sys/user/status` | PUT | `sys:user:status` |
 | `/sys/user/reset-password` | PUT | `sys:user:resetPwd` |
 | `/sys/user/change-password` | PUT | 登录用户 |
+| `/sys/user/{id}/roles` | GET | `sys:user:assignRole` |
+| `/sys/user/{id}/roles` | PUT | `sys:user:assignRole` |
 | `/sys/user/add` | POST | `sys:user:add` |
 | `/sys/user/modify` | POST | `sys:user:edit` |
 | `/sys/user/delete/{id}` | DELETE | `sys:user:remove` |

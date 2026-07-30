@@ -6,16 +6,23 @@ import com.system.common.BusinessException;
 import com.system.common.PageResult;
 import com.system.common.ResultCode;
 import com.system.common.SystemConstants;
+import com.system.convert.RoleConvert;
 import com.system.convert.UserConvert;
 import com.system.dto.UserAddDTO;
+import com.system.dto.UserAssignRoleDTO;
 import com.system.dto.UserChangePasswordDTO;
 import com.system.dto.UserResetPasswordDTO;
 import com.system.dto.UserSearchDTO;
 import com.system.dto.UserStatusDTO;
 import com.system.dto.UserUpdateDTO;
+import com.system.entity.SysRole;
 import com.system.entity.SysUser;
+import com.system.entity.SysUserRole;
+import com.system.mapper.SysRoleMapper;
 import com.system.mapper.SysUserMapper;
+import com.system.mapper.SysUserRoleMapper;
 import com.system.service.SysUserService;
+import com.system.vo.RolePageVO;
 import com.system.vo.UserDetailVO;
 import com.system.vo.UserPageVO;
 import jakarta.annotation.Resource;
@@ -56,7 +63,16 @@ public class SysUserServiceImpl implements SysUserService {
     private UserConvert userConvert;
 
     @Resource
+    private RoleConvert roleConvert;
+
+    @Resource
     private PasswordEncoder passwordEncoder;
+
+    @Resource
+    private SysRoleMapper sysRoleMapper;
+
+    @Resource
+    private SysUserRoleMapper sysUserRoleMapper;
 
     @Override
     public UserDetailVO getUserDetail(Long id) {
@@ -194,6 +210,37 @@ public class SysUserServiceImpl implements SysUserService {
         }
     }
 
+    @Override
+    public List<RolePageVO> getUserRoles(Long id) {
+        checkUserExists(id);
+        return sysRoleMapper.selectRolesByUserId(id).stream()
+                .map(roleConvert::convertRolePageVO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void assignUserRoles(Long id, UserAssignRoleDTO userAssignRoleDTO) {
+        checkUserExists(id);
+        List<Long> roleIds = userAssignRoleDTO.getRoleIds().stream()
+                .distinct()
+                .collect(Collectors.toList());
+        checkRolesValid(roleIds);
+
+        sysUserRoleMapper.delete(new LambdaQueryWrapper<SysUserRole>()
+                .eq(SysUserRole::getUserId, id));
+
+        for (Long roleId : roleIds) {
+            SysUserRole userRole = new SysUserRole();
+            userRole.setUserId(id);
+            userRole.setRoleId(roleId);
+            int rows = sysUserRoleMapper.insert(userRole);
+            if (rows <= 0) {
+                throw new BusinessException("分配角色失败");
+            }
+        }
+    }
+
     /**
      * 删除一条数据
      * MyBatis-Plus操作 deleteById(id)
@@ -245,6 +292,25 @@ public class SysUserServiceImpl implements SysUserService {
             throw new BusinessException(ResultCode.UNAUTHORIZED);
         }
         return Long.valueOf(authentication.getName());
+    }
+
+    private void checkUserExists(Long id) {
+        SysUser dbUser = sysUserMapper.selectById(id);
+        if (dbUser == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "用户不存在");
+        }
+    }
+
+    private void checkRolesValid(List<Long> roleIds) {
+        if (roleIds.isEmpty()) {
+            return;
+        }
+        Long count = sysRoleMapper.selectCount(new LambdaQueryWrapper<SysRole>()
+                .in(SysRole::getId, roleIds)
+                .eq(SysRole::getStatus, SystemConstants.USER_NORMAL));
+        if (count == null || count != roleIds.size()) {
+            throw new BusinessException("存在无效或已禁用角色");
+        }
     }
 
 }

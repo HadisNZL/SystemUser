@@ -2,13 +2,17 @@ package com.system.service;
 
 import com.system.common.PageResult;
 import com.system.dto.UserAddDTO;
+import com.system.dto.UserAssignRoleDTO;
 import com.system.dto.UserChangePasswordDTO;
 import com.system.dto.UserResetPasswordDTO;
 import com.system.dto.UserSearchDTO;
 import com.system.dto.UserStatusDTO;
 import com.system.dto.UserUpdateDTO;
+import com.system.vo.RolePageVO;
 import com.system.vo.UserDetailVO;
 import com.system.vo.UserPageVO;
+
+import java.util.List;
 
 public interface SysUserService {
 
@@ -29,6 +33,10 @@ public interface SysUserService {
     void resetPassword(UserResetPasswordDTO resetPasswordDTO);
 
     void changePassword(UserChangePasswordDTO changePasswordDTO);
+
+    List<RolePageVO> getUserRoles(Long id);
+
+    void assignUserRoles(Long id, UserAssignRoleDTO userAssignRoleDTO);
 
     /**
      * 删除一条数据

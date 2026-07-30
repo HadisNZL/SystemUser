@@ -1,7 +1,9 @@
 package com.system.controller;
 
 import com.system.common.GlobalExceptionHandler;
+import com.system.dto.UserAssignRoleDTO;
 import com.system.service.SysUserService;
+import com.system.vo.RolePageVO;
 import com.system.vo.UserDetailVO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +14,7 @@ import org.springframework.validation.Validator;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -139,6 +142,41 @@ class SysUserControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(false));
     }
 
+    @Test
+    void getUserRolesShouldReturnRoles() throws Exception {
+        mockMvc.perform(get("/sys/user/1/roles"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data[0].id").value(1))
+                .andExpect(jsonPath("$.data[0].roleName").value("超级管理员"))
+                .andExpect(jsonPath("$.data[0].roleCode").value("super_admin"));
+    }
+
+    @Test
+    void assignUserRolesShouldReturnSuccess() throws Exception {
+        mockMvc.perform(put("/sys/user/1/roles")
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "roleIds": [1, 2]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.isSuccess").value(true))
+                .andExpect(jsonPath("$.data").value(true));
+    }
+
+    @Test
+    void assignUserRolesShouldValidateRoleIds() throws Exception {
+        mockMvc.perform(put("/sys/user/1/roles")
+                        .contentType("application/json")
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.isSuccess").value(false));
+    }
+
     private Validator validator() {
         LocalValidatorFactoryBean validatorFactoryBean = new LocalValidatorFactoryBean();
         validatorFactoryBean.afterPropertiesSet();
@@ -186,6 +224,22 @@ class SysUserControllerTest {
 
         @Override
         public void changePassword(com.system.dto.UserChangePasswordDTO changePasswordDTO) {
+        }
+
+        @Override
+        public List<RolePageVO> getUserRoles(Long id) {
+            RolePageVO vo = new RolePageVO();
+            vo.setId(1L);
+            vo.setRoleName("超级管理员");
+            vo.setRoleCode("super_admin");
+            vo.setSort(1);
+            vo.setStatus(1);
+            vo.setCreateTime(LocalDateTime.of(2026, 7, 29, 10, 0));
+            return List.of(vo);
+        }
+
+        @Override
+        public void assignUserRoles(Long id, UserAssignRoleDTO userAssignRoleDTO) {
         }
 
         @Override
