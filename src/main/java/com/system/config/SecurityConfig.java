@@ -59,6 +59,7 @@ public class SecurityConfig {
                 // 路由权限配置
                 .authorizeHttpRequests(auth -> auth
                         // 白名单，无需认证
+                        .requestMatchers("/captcha").permitAll()
                         .requestMatchers("/sys/login").permitAll()
                         .requestMatchers("/doc.html", "/v3/api-docs/**", "/webjars/**").permitAll()
                         // 其余接口必须认证

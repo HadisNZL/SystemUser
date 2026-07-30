@@ -7,6 +7,7 @@ import com.system.common.SystemConstants;
 import com.system.dto.LoginDTO;
 import com.system.entity.SysUser;
 import com.system.mapper.SysUserMapper;
+import com.system.service.CaptchaService;
 import com.system.service.LoginService;
 import com.system.util.JwtUtil;
 import jakarta.annotation.Resource;
@@ -28,8 +29,12 @@ public class LoginServiceImpl implements LoginService {
     @Resource
     private JwtUtil jwtUtil;
 
+    @Resource
+    private CaptchaService captchaService;
+
     @Override
     public String login(LoginDTO loginDTO) {
+        captchaService.validateCaptcha(loginDTO.getCaptchaKey(), loginDTO.getCaptchaCode());
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SysUser::getUsername, loginDTO.getUsername());
         SysUser user = sysUserMapper.selectOne(wrapper);

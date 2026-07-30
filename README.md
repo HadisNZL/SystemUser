@@ -152,15 +152,25 @@ http://localhost:8080/v3/api-docs
 
 ## 登录与鉴权测试
 
+先获取验证码：
+
+```bash
+curl http://localhost:8080/captcha
+```
+
+返回的 `data.captchaImage` 可以直接作为图片展示，`data.captchaKey` 登录时回传。
+
 登录：
 
 ```bash
 curl -X POST http://localhost:8080/sys/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"123456"}'
+  -d '{"username":"admin","password":"123456","captchaKey":"这里替换为captchaKey","captchaCode":"图片里的验证码"}'
 ```
 
 成功后返回的 `data` 是 JWT。
+
+验证码当前使用内存保存，2 分钟过期，校验后立即失效。后续 Redis 阶段会迁移到 Redis。
 
 访问受保护接口：
 
@@ -204,7 +214,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 
 ## DTO / VO 边界
 
-- `LoginDTO`：登录入参，包含 `username/password`
+- `LoginDTO`：登录入参，包含 `username/password/captchaKey/captchaCode`
 - `UserAddDTO`：新增用户入参，包含 `password`
 - `UserUpdateDTO`：修改用户入参，不直接修改密码
 - `UserStatusDTO`：启用 / 禁用用户入参，只包含 `id/status`
@@ -258,6 +268,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 当前测试包含：
 
 - `PasswordEncoderTests`：生成并校验 BCrypt 密文
+- `CaptchaControllerTest`：验证码接口响应
 - `LoginControllerTest`：登录接口成功响应、参数校验
 - `SysUserControllerTest`：用户详情响应不暴露敏感字段
 - `SysRoleControllerTest`：角色分页、新增、修改、删除接口响应

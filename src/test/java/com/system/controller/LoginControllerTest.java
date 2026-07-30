@@ -43,7 +43,9 @@ class LoginControllerTest {
                         .content("""
                                 {
                                   "username": "admin",
-                                  "password": "123456"
+                                  "password": "123456",
+                                  "captchaKey": "test-key",
+                                  "captchaCode": "A1B2"
                                 }
                                 """))
                 .andExpect(status().isOk())
@@ -59,13 +61,33 @@ class LoginControllerTest {
                         .content("""
                                 {
                                   "username": "admin",
-                                  "password": ""
+                                  "password": "",
+                                  "captchaKey": "test-key",
+                                  "captchaCode": "A1B2"
                                 }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.isSuccess").value(false))
                 .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.containsString("密码不能为空")));
+    }
+
+    @Test
+    void loginShouldReturnBadRequestWhenCaptchaBlank() throws Exception {
+        mockMvc.perform(post("/sys/login")
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "username": "admin",
+                                  "password": "123456",
+                                  "captchaKey": "test-key",
+                                  "captchaCode": ""
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.isSuccess").value(false))
+                .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.containsString("验证码不能为空")));
     }
 
     private Validator validator() {
