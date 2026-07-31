@@ -3,6 +3,10 @@ spring:
     name: admin-system
   profiles:
     active: dev  # 默认激活开发环境
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
   # 全局 Jackson 序列化与时间配置（所有环境通用）
   #效果同代码com.system.config/JacksonConfig.java配置一样（推荐，支持 LocalDateTime）
@@ -31,3 +35,7 @@ knife4j:
   enable: true # 开启 Knife4j 增强功能
   setting:
     language: zh_cn # 界面语言设置为中文
+
+system:
+  file:
+    upload-path: ./upload

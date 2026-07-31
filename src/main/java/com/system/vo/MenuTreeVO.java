@@ -1,5 +1,7 @@
 package com.system.vo;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -11,8 +13,10 @@ import java.util.List;
 @Schema(description = "菜单权限树视图对象")
 public class MenuTreeVO {
 
+    @JsonSerialize(using = ToStringSerializer.class)
     private Long id;
 
+    @JsonSerialize(using = ToStringSerializer.class)
     private Long parentId;
 
     private String name;

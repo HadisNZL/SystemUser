@@ -30,6 +30,7 @@
 - 统一响应码与全局异常处理
 - DTO / VO / Entity 分层
 - 操作日志注解与 AOP 入库
+- 本地文件上传下载
 
 ## 项目结构
 
@@ -211,8 +212,12 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 | `/sys/menu/add` | POST | `sys:menu:add` |
 | `/sys/menu/modify` | POST | `sys:menu:edit` |
 | `/sys/menu/delete/{id}` | DELETE | `sys:menu:remove` |
+| `/sys/file/upload` | POST | 登录用户 |
+| `/sys/file/download/{id}` | GET | 登录用户 |
 
 新增用户使用 `UserAddDTO`，需要传 `password`。查询返回使用 `UserPageVO`，不返回密码。
+
+文件上传使用 `multipart/form-data`，字段名为 `file`。文件元数据保存到 `sys_file`，文件本体默认保存到 `./upload`，最大 10MB。
 
 ## DTO / VO 边界
 
@@ -228,11 +233,14 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `MenuAddDTO`：新增目录、菜单、按钮权限入参
 - `MenuUpdateDTO`：修改目录、菜单、按钮权限入参
 - `MenuTreeVO`：菜单权限树返回对象，包含 `children`
+- `FileUploadVO`：文件上传返回对象，包含文件ID和下载地址
 - `UserPageVO`：用户分页返回对象，不包含密码
 - `UserDetailVO`：用户详情返回对象，不包含密码、逻辑删除、版本号
 - `SysUser`：数据库实体，不直接作为主要响应对象暴露
 
 原则：入参用 DTO，出参用 VO，数据库映射用 Entity。
+
+雪花 ID 使用 `Long` 存储，接口响应中的 ID 字段序列化为字符串，避免前端 JavaScript 数字精度丢失；`total`、`fileSize` 等统计类字段仍保持数字。
 
 ## 响应码约定
 

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.stream.Collectors;
@@ -66,6 +67,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public Result<?> dataIntegrityViolationExceptionHandler(DataIntegrityViolationException e) {
         return Result.fail(ResultCode.BAD_REQUEST, "参数错误：请求数据不满足数据库约束");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public Result<?> maxUploadSizeExceededExceptionHandler(MaxUploadSizeExceededException e) {
+        return Result.fail(ResultCode.BAD_REQUEST, "参数错误：文件大小不能超过10MB");
     }
 
     // 捕获所有未知异常
