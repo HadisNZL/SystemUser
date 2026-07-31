@@ -32,6 +32,7 @@
 - 操作日志注解与 AOP 入库
 - 本地文件上传下载
 - 用户 Excel 导入导出
+- 字典配置管理
 
 ## 项目结构
 
@@ -216,6 +217,15 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 | `/sys/menu/add` | POST | `sys:menu:add` |
 | `/sys/menu/modify` | POST | `sys:menu:edit` |
 | `/sys/menu/delete/{id}` | DELETE | `sys:menu:remove` |
+| `/sys/dict/type/search_list` | GET | `sys:dict:type:list` |
+| `/sys/dict/type/add` | POST | `sys:dict:type:add` |
+| `/sys/dict/type/modify` | POST | `sys:dict:type:edit` |
+| `/sys/dict/type/delete/{id}` | DELETE | `sys:dict:type:remove` |
+| `/sys/dict/data/search_list` | GET | `sys:dict:data:list` |
+| `/sys/dict/data/type/{dictType}` | GET | 登录用户 |
+| `/sys/dict/data/add` | POST | `sys:dict:data:add` |
+| `/sys/dict/data/modify` | POST | `sys:dict:data:edit` |
+| `/sys/dict/data/delete/{id}` | DELETE | `sys:dict:data:remove` |
 | `/sys/file/upload` | POST | 登录用户 |
 | `/sys/file/download/{id}` | GET | 登录用户 |
 
@@ -224,6 +234,8 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 文件上传使用 `multipart/form-data`，字段名为 `file`。文件元数据保存到 `sys_file`，文件本体默认保存到 `./upload`，最大 10MB。
 
 用户 Excel 导入使用 `multipart/form-data`，字段名为 `file`。模板列为：账号、密码、昵称、手机号、邮箱、状态。状态可填 `1/正常` 或 `0/禁用`，为空默认正常。
+
+字典配置分为字典类型和字典数据。前端下拉框通过 `/sys/dict/data/type/{dictType}` 获取启用的字典数据。
 
 ## DTO / VO 边界
 
@@ -235,6 +247,8 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `UserChangePasswordDTO`：当前用户修改自己的密码入参，包含 `oldPassword/newPassword`
 - `UserSearchDTO`：查询条件
 - `UserExcelDTO`：用户 Excel 行数据
+- `DictTypeAddDTO / DictTypeUpdateDTO / DictTypeSearchDTO`：字典类型入参
+- `DictDataAddDTO / DictDataUpdateDTO / DictDataSearchDTO`：字典数据入参
 - `RoleAssignPermissionDTO`：角色分配权限入参，空数组表示清空权限
 - `ProfileVO`：当前登录用户信息，包含用户、角色、权限标识
 - `MenuAddDTO`：新增目录、菜单、按钮权限入参
@@ -242,6 +256,8 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `MenuTreeVO`：菜单权限树返回对象，包含 `children`
 - `FileUploadVO`：文件上传返回对象，包含文件ID和下载地址
 - `UserImportResultVO`：用户导入结果，包含成功数量和失败明细
+- `DictTypeVO`：字典类型返回对象
+- `DictDataVO`：字典数据返回对象
 - `UserPageVO`：用户分页返回对象，不包含密码
 - `UserDetailVO`：用户详情返回对象，不包含密码、逻辑删除、版本号
 - `SysUser`：数据库实体，不直接作为主要响应对象暴露
