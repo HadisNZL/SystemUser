@@ -5,19 +5,26 @@ import com.system.dto.UserAssignRoleDTO;
 import com.system.service.SysUserService;
 import com.system.vo.RolePageVO;
 import com.system.vo.UserDetailVO;
+import com.system.vo.UserImportResultVO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.Validator;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -177,6 +184,33 @@ class SysUserControllerTest {
                 .andExpect(jsonPath("$.isSuccess").value(false));
     }
 
+    @Test
+    void exportUserExcelShouldReturnAttachment() throws Exception {
+        mockMvc.perform(get("/sys/user/export"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString(".xlsx")))
+                .andExpect(content().bytes("excel".getBytes()));
+    }
+
+    @Test
+    void getUserImportTemplateShouldReturnAttachment() throws Exception {
+        mockMvc.perform(get("/sys/user/import-template"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString(".xlsx")))
+                .andExpect(content().bytes("template".getBytes()));
+    }
+
+    @Test
+    void importUserExcelShouldReturnResult() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "users.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "excel".getBytes());
+
+        mockMvc.perform(multipart("/sys/user/import").file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.successCount").value(1))
+                .andExpect(jsonPath("$.data.failureCount").value(0));
+    }
+
     private Validator validator() {
         LocalValidatorFactoryBean validatorFactoryBean = new LocalValidatorFactoryBean();
         validatorFactoryBean.afterPropertiesSet();
@@ -202,6 +236,24 @@ class SysUserControllerTest {
         @Override
         public com.system.common.PageResult<com.system.vo.UserPageVO> getUserPage(com.system.dto.UserSearchDTO dto, Integer pageNum, Integer pageSize) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public byte[] exportUserExcel(com.system.dto.UserSearchDTO dto) {
+            return "excel".getBytes();
+        }
+
+        @Override
+        public byte[] getUserImportTemplate() {
+            return "template".getBytes();
+        }
+
+        @Override
+        public UserImportResultVO importUserExcel(MultipartFile file) {
+            UserImportResultVO vo = new UserImportResultVO();
+            vo.setSuccessCount(1);
+            vo.setFailureCount(0);
+            return vo;
         }
 
         @Override

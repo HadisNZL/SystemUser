@@ -14,6 +14,7 @@ import com.system.dto.UserUpdateDTO;
 import com.system.service.SysUserService;
 import com.system.vo.RolePageVO;
 import com.system.vo.UserDetailVO;
+import com.system.vo.UserImportResultVO;
 import com.system.vo.UserPageVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,10 +22,16 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -67,6 +74,32 @@ public class SysUserController {
                                                       @RequestParam(defaultValue = SystemConstants.DEFAULT_PAGE_SIZE) @Min(value = 1, message = "每页条数必须大于等于1") @Max(value = 100, message = "每页条数不能超过100") Integer pageSize) {
         PageResult<UserPageVO> page = sysUserService.getUserPage(dto, pageNum, pageSize);
         return Result.success(page);
+    }
+
+    @Operation(summary = "导出用户列表", description = "按查询条件导出用户Excel")
+    @GetMapping("/export")
+    @PreAuthorize("hasAuthority('sys:user:export')")
+    @OperationLog(module = "用户管理", operation = "导出用户")
+    public ResponseEntity<byte[]> exportUserExcel(@Valid UserSearchDTO dto) {
+        byte[] data = sysUserService.exportUserExcel(dto);
+        return buildExcelResponse(data, "用户列表.xlsx");
+    }
+
+    @Operation(summary = "下载用户导入模板", description = "下载用户导入Excel模板")
+    @GetMapping("/import-template")
+    @PreAuthorize("hasAuthority('sys:user:import')")
+    public ResponseEntity<byte[]> getUserImportTemplate() {
+        byte[] data = sysUserService.getUserImportTemplate();
+        return buildExcelResponse(data, "用户导入模板.xlsx");
+    }
+
+    @Operation(summary = "导入用户", description = "通过Excel批量导入用户")
+    @PostMapping("/import")
+    @PreAuthorize("hasAuthority('sys:user:import')")
+    @OperationLog(module = "用户管理", operation = "导入用户")
+    public Result<UserImportResultVO> importUserExcel(@RequestParam("file") MultipartFile file) {
+        UserImportResultVO result = sysUserService.importUserExcel(file);
+        return Result.success(result);
     }
 
     // post http://localhost:8080/sys/user/add
@@ -165,5 +198,15 @@ public class SysUserController {
     public Result<Boolean> adminPhysicalDeleteUser(@PathVariable @Min(value = 1, message = "用户ID必须大于等于1") Long id) {
         sysUserService.adminPhysicalDeleteUser(id);
         return Result.success(true);
+    }
+
+    private ResponseEntity<byte[]> buildExcelResponse(byte[] data, String filename) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename(filename, StandardCharsets.UTF_8)
+                        .build()
+                        .toString())
+                .body(data);
     }
 }

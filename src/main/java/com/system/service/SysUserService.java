@@ -10,7 +10,9 @@ import com.system.dto.UserStatusDTO;
 import com.system.dto.UserUpdateDTO;
 import com.system.vo.RolePageVO;
 import com.system.vo.UserDetailVO;
+import com.system.vo.UserImportResultVO;
 import com.system.vo.UserPageVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,6 +22,12 @@ public interface SysUserService {
 
     //  多条件查询
     PageResult<UserPageVO> getUserPage(UserSearchDTO dto, Integer pageNum, Integer pageSize);
+
+    byte[] exportUserExcel(UserSearchDTO dto);
+
+    byte[] getUserImportTemplate();
+
+    UserImportResultVO importUserExcel(MultipartFile file);
 
     // 插入一条数据
 

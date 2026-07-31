@@ -11,6 +11,7 @@ import com.system.convert.UserConvert;
 import com.system.dto.UserAddDTO;
 import com.system.dto.UserAssignRoleDTO;
 import com.system.dto.UserChangePasswordDTO;
+import com.system.dto.UserExcelDTO;
 import com.system.dto.UserResetPasswordDTO;
 import com.system.dto.UserSearchDTO;
 import com.system.dto.UserStatusDTO;
@@ -23,15 +24,22 @@ import com.system.mapper.SysUserMapper;
 import com.system.mapper.SysUserRoleMapper;
 import com.system.service.SysUserService;
 import com.system.util.SecurityUtil;
+import com.system.util.UserExcelUtil;
 import com.system.vo.RolePageVO;
 import com.system.vo.UserDetailVO;
+import com.system.vo.UserImportFailureVO;
+import com.system.vo.UserImportResultVO;
 import com.system.vo.UserPageVO;
 import jakarta.annotation.Resource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +63,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class SysUserServiceImpl implements SysUserService {
+    private static final String PHONE_REGEX = "^1[3-9]\\d{9}$";
+    private static final String EMAIL_REGEX = "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$";
+
     @Resource
     private SysUserMapper sysUserMapper;
 
@@ -88,16 +99,7 @@ public class SysUserServiceImpl implements SysUserService {
     @Override
     public PageResult<UserPageVO> getUserPage(UserSearchDTO dto, Integer pageNum, Integer pageSize) {
         Page<SysUser> page = new Page<>(pageNum, pageSize);
-        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
-        // 1.账号模糊查询 不为空才拼接条件
-        wrapper.like(dto.getUsername() != null && !dto.getUsername().isEmpty(), SysUser::getUsername, dto.getUsername());
-        // 2.状态精准查询
-        wrapper.eq(dto.getStatus() != null, SysUser::getStatus, dto.getStatus());
-        // 3.创建时间区间查询
-        wrapper.ge(dto.getStartTime() != null, SysUser::getCreateTime, dto.getStartTime());
-        wrapper.le(dto.getEndTime() != null, SysUser::getCreateTime, dto.getEndTime());
-        // 4.默认按创建时间倒序
-        wrapper.orderByDesc(SysUser::getCreateTime);
+        LambdaQueryWrapper<SysUser> wrapper = buildUserSearchWrapper(dto);
         Page<SysUser> userPage = sysUserMapper.selectPage(page, wrapper);
 
         // 实体转VO
@@ -111,6 +113,44 @@ public class SysUserServiceImpl implements SysUserService {
 //        voPage.setRecords(voList);
 
         return PageResult.build(userPage.getTotal(), voList);
+    }
+
+    @Override
+    public byte[] exportUserExcel(UserSearchDTO dto) {
+        List<UserPageVO> users = sysUserMapper.selectList(buildUserSearchWrapper(dto)).stream()
+                .map(userConvert::convertUserPageVO)
+                .collect(Collectors.toList());
+        return UserExcelUtil.writeUsers(users);
+    }
+
+    @Override
+    public byte[] getUserImportTemplate() {
+        return UserExcelUtil.buildTemplate();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public UserImportResultVO importUserExcel(MultipartFile file) {
+        List<UserExcelDTO> rows = UserExcelUtil.readUsers(file);
+        UserImportResultVO result = new UserImportResultVO();
+        Set<String> usernamesInExcel = new HashSet<>();
+
+        for (UserExcelDTO row : rows) {
+            List<String> errors = validateImportRow(row, usernamesInExcel);
+            if (!errors.isEmpty()) {
+                addImportFailure(result, row, String.join("；", errors));
+                continue;
+            }
+            SysUser user = buildImportUser(row);
+            int insertRows = sysUserMapper.insert(user);
+            if (insertRows <= 0) {
+                addImportFailure(result, row, "新增用户失败");
+                continue;
+            }
+            result.setSuccessCount(result.getSuccessCount() + 1);
+        }
+        result.setFailureCount(result.getFailures().size());
+        return result;
     }
 
     @Override
@@ -302,6 +342,90 @@ public class SysUserServiceImpl implements SysUserService {
         if (count == null || count != roleIds.size()) {
             throw new BusinessException("存在无效或已禁用角色");
         }
+    }
+
+    private LambdaQueryWrapper<SysUser> buildUserSearchWrapper(UserSearchDTO dto) {
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        if (dto == null) {
+            return wrapper.orderByDesc(SysUser::getCreateTime);
+        }
+        wrapper.like(dto.getUsername() != null && !dto.getUsername().isEmpty(), SysUser::getUsername, dto.getUsername());
+        wrapper.eq(dto.getStatus() != null, SysUser::getStatus, dto.getStatus());
+        wrapper.ge(dto.getStartTime() != null, SysUser::getCreateTime, dto.getStartTime());
+        wrapper.le(dto.getEndTime() != null, SysUser::getCreateTime, dto.getEndTime());
+        wrapper.orderByDesc(SysUser::getCreateTime);
+        return wrapper;
+    }
+
+    private List<String> validateImportRow(UserExcelDTO row, Set<String> usernamesInExcel) {
+        List<String> errors = new ArrayList<>();
+        if (row.getUsername() == null || row.getUsername().isBlank()) {
+            errors.add("账号不能为空");
+        } else {
+            if (row.getUsername().length() > 30) {
+                errors.add("账号长度不能超过30个字符");
+            }
+            if (!usernamesInExcel.add(row.getUsername())) {
+                errors.add("Excel内账号重复");
+            }
+            Long count = sysUserMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                    .eq(SysUser::getUsername, row.getUsername()));
+            if (count != null && count > 0) {
+                errors.add("账号已存在");
+            }
+        }
+        if (row.getPassword() == null || row.getPassword().isBlank()) {
+            errors.add("密码不能为空");
+        } else if (row.getPassword().length() < 6 || row.getPassword().length() > 20) {
+            errors.add("密码长度必须在6到20个字符之间");
+        }
+        if (row.getNickname() == null || row.getNickname().isBlank()) {
+            errors.add("昵称不能为空");
+        } else if (row.getNickname().length() > 50) {
+            errors.add("昵称长度不能超过50个字符");
+        }
+        if (row.getPhone() != null && !row.getPhone().isBlank() && !row.getPhone().matches(PHONE_REGEX)) {
+            errors.add("手机号格式不正确");
+        }
+        if (row.getEmail() != null && !row.getEmail().isBlank() && !row.getEmail().matches(EMAIL_REGEX)) {
+            errors.add("邮箱格式不正确");
+        }
+        if (parseImportStatus(row.getStatus()) == null) {
+            errors.add("状态只能是0或1");
+        }
+        return errors;
+    }
+
+    private SysUser buildImportUser(UserExcelDTO row) {
+        SysUser user = new SysUser();
+        user.setUsername(row.getUsername());
+        user.setPassword(passwordEncoder.encode(row.getPassword()));
+        user.setNickname(row.getNickname());
+        user.setPhone(row.getPhone());
+        user.setEmail(row.getEmail());
+        user.setStatus(parseImportStatus(row.getStatus()));
+        return user;
+    }
+
+    private Integer parseImportStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return SystemConstants.USER_NORMAL;
+        }
+        if ("1".equals(status) || "正常".equals(status)) {
+            return SystemConstants.USER_NORMAL;
+        }
+        if ("0".equals(status) || "禁用".equals(status)) {
+            return SystemConstants.USER_DISABLE;
+        }
+        return null;
+    }
+
+    private void addImportFailure(UserImportResultVO result, UserExcelDTO row, String reason) {
+        UserImportFailureVO failure = new UserImportFailureVO();
+        failure.setRowNum(row.getRowNum());
+        failure.setUsername(row.getUsername());
+        failure.setReason(reason);
+        result.getFailures().add(failure);
     }
 
 }

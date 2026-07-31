@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -94,6 +95,12 @@ public class OperationLogAspect {
     }
 
     private String toJson(Object value) {
+        if (value instanceof byte[] bytes) {
+            return "二进制数据，大小：" + bytes.length + "字节";
+        }
+        if (value instanceof ResponseEntity<?> response && response.getBody() instanceof byte[] bytes) {
+            return "二进制响应，大小：" + bytes.length + "字节";
+        }
         try {
             return limit(maskSensitive(objectMapper.writeValueAsString(value)));
         } catch (JsonProcessingException e) {

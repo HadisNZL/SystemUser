@@ -31,6 +31,7 @@
 - DTO / VO / Entity 分层
 - 操作日志注解与 AOP 入库
 - 本地文件上传下载
+- 用户 Excel 导入导出
 
 ## 项目结构
 
@@ -199,6 +200,9 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 | `/sys/user/modify` | POST | `sys:user:edit` |
 | `/sys/user/delete/{id}` | DELETE | `sys:user:remove` |
 | `/sys/user/delete_admin/{id}` | DELETE | `sys:user:physicalDel` |
+| `/sys/user/export` | GET | `sys:user:export` |
+| `/sys/user/import-template` | GET | `sys:user:import` |
+| `/sys/user/import` | POST | `sys:user:import` |
 | `/sys/role/search_list` | GET | `sys:role:list` |
 | `/sys/role/add` | POST | `sys:role:add` |
 | `/sys/role/modify` | POST | `sys:role:edit` |
@@ -219,6 +223,8 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 
 文件上传使用 `multipart/form-data`，字段名为 `file`。文件元数据保存到 `sys_file`，文件本体默认保存到 `./upload`，最大 10MB。
 
+用户 Excel 导入使用 `multipart/form-data`，字段名为 `file`。模板列为：账号、密码、昵称、手机号、邮箱、状态。状态可填 `1/正常` 或 `0/禁用`，为空默认正常。
+
 ## DTO / VO 边界
 
 - `LoginDTO`：登录入参，包含 `username/password/captchaKey/captchaCode`
@@ -228,12 +234,14 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `UserResetPasswordDTO`：管理员重置用户密码入参，只包含 `id/newPassword`
 - `UserChangePasswordDTO`：当前用户修改自己的密码入参，包含 `oldPassword/newPassword`
 - `UserSearchDTO`：查询条件
+- `UserExcelDTO`：用户 Excel 行数据
 - `RoleAssignPermissionDTO`：角色分配权限入参，空数组表示清空权限
 - `ProfileVO`：当前登录用户信息，包含用户、角色、权限标识
 - `MenuAddDTO`：新增目录、菜单、按钮权限入参
 - `MenuUpdateDTO`：修改目录、菜单、按钮权限入参
 - `MenuTreeVO`：菜单权限树返回对象，包含 `children`
 - `FileUploadVO`：文件上传返回对象，包含文件ID和下载地址
+- `UserImportResultVO`：用户导入结果，包含成功数量和失败明细
 - `UserPageVO`：用户分页返回对象，不包含密码
 - `UserDetailVO`：用户详情返回对象，不包含密码、逻辑删除、版本号
 - `SysUser`：数据库实体，不直接作为主要响应对象暴露
