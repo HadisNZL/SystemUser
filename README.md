@@ -33,6 +33,7 @@
 - 本地文件上传下载
 - 用户 Excel 导入导出
 - 字典配置管理
+- Redis 验证码缓存
 
 ## 项目结构
 
@@ -142,6 +143,18 @@ BCrypt 每次生成的密文都不同，这是正常现象。只要 `matches("12
 ./mvnw spring-boot:run
 ```
 
+开发环境验证码依赖 Redis，默认连接：
+
+```text
+127.0.0.1:6379
+```
+
+本地可先启动 Redis：
+
+```bash
+redis-server
+```
+
 切换 profile：
 
 ```bash
@@ -175,7 +188,7 @@ curl -X POST http://localhost:8080/sys/login \
 
 成功后返回的 `data` 是 JWT。
 
-验证码当前使用内存保存，2 分钟过期，校验后立即失效。后续 Redis 阶段会迁移到 Redis。
+验证码使用 Redis 保存，key 前缀为 `captcha:`，2 分钟过期，校验后立即删除。
 
 访问受保护接口：
 

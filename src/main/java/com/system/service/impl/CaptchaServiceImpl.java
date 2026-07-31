@@ -3,6 +3,8 @@ package com.system.service.impl;
 import com.system.common.BusinessException;
 import com.system.service.CaptchaService;
 import com.system.vo.CaptchaVO;
+import jakarta.annotation.Resource;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -14,12 +16,13 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.Base64;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 验证码服务实现。
+ */
 @Service
 public class CaptchaServiceImpl implements CaptchaService {
 
@@ -29,16 +32,18 @@ public class CaptchaServiceImpl implements CaptchaService {
     private static final int HEIGHT = 40;
     private static final int EXPIRE_MINUTES = 2;
     private static final String IMAGE_PREFIX = "data:image/png;base64,";
+    private static final String CAPTCHA_KEY_PREFIX = "captcha:";
 
     private final SecureRandom random = new SecureRandom();
-    private final Map<String, CaptchaCache> captchaCache = new ConcurrentHashMap<>();
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
     public CaptchaVO generateCaptcha() {
-        clearExpiredCaptcha();
         String code = generateCode();
         String captchaKey = UUID.randomUUID().toString();
-        captchaCache.put(captchaKey, new CaptchaCache(code, LocalDateTime.now().plusMinutes(EXPIRE_MINUTES)));
+        stringRedisTemplate.opsForValue().set(buildCaptchaKey(captchaKey), code, Duration.ofMinutes(EXPIRE_MINUTES));
 
         CaptchaVO captchaVO = new CaptchaVO();
         captchaVO.setCaptchaKey(captchaKey);
@@ -48,14 +53,11 @@ public class CaptchaServiceImpl implements CaptchaService {
 
     @Override
     public void validateCaptcha(String captchaKey, String captchaCode) {
-        CaptchaCache cache = captchaCache.remove(captchaKey);
-        if (cache == null) {
+        String cacheCode = stringRedisTemplate.opsForValue().getAndDelete(buildCaptchaKey(captchaKey));
+        if (cacheCode == null) {
             throw new BusinessException("验证码不存在或已过期");
         }
-        if (cache.expireTime().isBefore(LocalDateTime.now())) {
-            throw new BusinessException("验证码已过期");
-        }
-        if (captchaCode == null || !cache.code().equalsIgnoreCase(captchaCode.trim())) {
+        if (captchaCode == null || !cacheCode.equalsIgnoreCase(captchaCode.trim())) {
             throw new BusinessException("验证码错误");
         }
     }
@@ -110,11 +112,7 @@ public class CaptchaServiceImpl implements CaptchaService {
         return new Color(red, green, blue);
     }
 
-    private void clearExpiredCaptcha() {
-        LocalDateTime now = LocalDateTime.now();
-        captchaCache.entrySet().removeIf(item -> item.getValue().expireTime().isBefore(now));
-    }
-
-    private record CaptchaCache(String code, LocalDateTime expireTime) {
+    private String buildCaptchaKey(String captchaKey) {
+        return CAPTCHA_KEY_PREFIX + captchaKey;
     }
 }
