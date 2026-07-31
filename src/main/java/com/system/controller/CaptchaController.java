@@ -1,5 +1,6 @@
 package com.system.controller;
 
+import com.system.annotation.RateLimit;
 import com.system.common.Result;
 import com.system.service.CaptchaService;
 import com.system.vo.CaptchaVO;
@@ -18,6 +19,7 @@ public class CaptchaController {
 
     @Operation(summary = "获取验证码", description = "返回验证码key和Base64图片")
     @GetMapping("/captcha")
+    @RateLimit(seconds = 60, maxCount = 10, key = "captcha")
     public Result<CaptchaVO> getCaptcha() {
         CaptchaVO captcha = captchaService.generateCaptcha();
         return Result.success(captcha);

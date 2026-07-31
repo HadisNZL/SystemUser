@@ -1,6 +1,7 @@
 package com.system.controller;
 
 import com.system.annotation.OperationLog;
+import com.system.annotation.RateLimit;
 import com.system.common.Result;
 import com.system.service.SysFileService;
 import com.system.vo.FileUploadVO;
@@ -37,6 +38,7 @@ public class SysFileController {
     @PostMapping("/upload")
     @PreAuthorize("isAuthenticated()")
     @OperationLog(module = "文件管理", operation = "上传文件")
+    @RateLimit(seconds = 60, maxCount = 20, key = "file_upload")
     public Result<FileUploadVO> uploadFile(@RequestParam("file") MultipartFile file) {
         FileUploadVO fileUploadVO = sysFileService.uploadFile(file);
         return Result.success(fileUploadVO);

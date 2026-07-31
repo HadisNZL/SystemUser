@@ -4,6 +4,7 @@ import com.system.common.BusinessException;
 import com.system.common.Result;
 import com.system.common.ResultCode;
 import com.system.common.SystemConstants;
+import com.system.annotation.RateLimit;
 import com.system.dto.LoginDTO;
 import com.system.service.LoginService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +28,7 @@ public class LoginController {
 
     @PostMapping("/login")
     @Operation(summary = "用户登录")
+    @RateLimit(seconds = 60, maxCount = 5, key = "login")
     public Result<String> login(@Valid @RequestBody LoginDTO loginDTO) {
         String token = loginService.login(loginDTO);
         return Result.success(token);

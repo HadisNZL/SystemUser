@@ -34,6 +34,7 @@
 - 用户 Excel 导入导出
 - 字典配置管理
 - Redis 验证码缓存
+- Redis 接口限流
 
 ## 项目结构
 
@@ -194,6 +195,14 @@ curl -X POST http://localhost:8080/sys/login \
 
 退出登录会把当前 JWT 的摘要写入 Redis 黑名单，key 前缀为 `token:blacklist:`，过期时间等于 token 剩余有效期。退出后旧 token 会被拦截，需要重新登录。
 
+接口限流使用 Redis 计数，key 前缀为 `rate_limit:`，当前限制：
+
+```text
+/sys/login      每个 IP 60 秒最多 5 次
+/captcha        每个 IP 60 秒最多 10 次
+/sys/file/upload 每个 IP 60 秒最多 20 次
+```
+
 访问受保护接口：
 
 ```bash
@@ -325,6 +334,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `SysUserControllerTest`：用户详情响应不暴露敏感字段
 - `SysRoleControllerTest`：角色分页、新增、修改、删除接口响应
 - `SecurityHandlerTest`：未登录 401、无权限 403 返回
+- `RedisRateLimitServiceImplTest`：Redis 接口限流计数与拦截
 - `AdminSystemApplicationTests`：Spring Boot 上下文启动
 
 ## 常见问题

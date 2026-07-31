@@ -1,5 +1,6 @@
 package com.system.common;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
@@ -22,7 +23,10 @@ public class GlobalExceptionHandler {
 
     // 捕获自定义业务异常
     @ExceptionHandler(BusinessException.class)
-    public Result<?> businessExceptionHandler(BusinessException e) {
+    public Result<?> businessExceptionHandler(BusinessException e, HttpServletResponse response) {
+        if (ResultCode.RATE_LIMIT.getCode().equals(e.getCode())) {
+            response.setStatus(ResultCode.RATE_LIMIT.getCode());
+        }
         return Result.fail(e.getCode(), e.getMessage());
     }
 
