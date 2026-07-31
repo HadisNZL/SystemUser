@@ -27,6 +27,10 @@ class LoginControllerTest {
             public String login(LoginDTO loginDTO) {
                 return "test-token";
             }
+
+            @Override
+            public void logout(String token) {
+            }
         };
         ReflectionTestUtils.setField(loginController, "loginService", loginService);
 
@@ -88,6 +92,15 @@ class LoginControllerTest {
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.isSuccess").value(false))
                 .andExpect(jsonPath("$.msg").value(org.hamcrest.Matchers.containsString("验证码不能为空")));
+    }
+
+    @Test
+    void logoutShouldReturnSuccess() throws Exception {
+        mockMvc.perform(post("/sys/logout")
+                        .header("Authorization", "Bearer test-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data").value(true));
     }
 
     private Validator validator() {

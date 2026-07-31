@@ -192,6 +192,8 @@ curl -X POST http://localhost:8080/sys/login \
 
 用户权限标识也使用 Redis 缓存，key 前缀为 `user:permissions:`，30 分钟过期。用户分配角色、角色分配权限、角色状态变化、菜单权限变化时会清理权限缓存。
 
+退出登录会把当前 JWT 的摘要写入 Redis 黑名单，key 前缀为 `token:blacklist:`，过期时间等于 token 剩余有效期。退出后旧 token 会被拦截，需要重新登录。
+
 访问受保护接口：
 
 ```bash
@@ -205,6 +207,7 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 
 | 接口 | 方法 | 权限 |
 | --- | --- | --- |
+| `/sys/logout` | POST | 登录用户 |
 | `/sys/user/{id}` | GET | `sys:user:detail` |
 | `/sys/user/search_list` | GET | `sys:user:list` |
 | `/sys/user/status` | PUT | `sys:user:status` |

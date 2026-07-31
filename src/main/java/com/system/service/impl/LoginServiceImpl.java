@@ -9,10 +9,13 @@ import com.system.entity.SysUser;
 import com.system.mapper.SysUserMapper;
 import com.system.service.CaptchaService;
 import com.system.service.LoginService;
+import com.system.service.TokenBlacklistService;
 import com.system.util.JwtUtil;
 import jakarta.annotation.Resource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
 
 /**
  * 登录实现
@@ -32,6 +35,9 @@ public class LoginServiceImpl implements LoginService {
     @Resource
     private CaptchaService captchaService;
 
+    @Resource
+    private TokenBlacklistService tokenBlacklistService;
+
     @Override
     public String login(LoginDTO loginDTO) {
         captchaService.validateCaptcha(loginDTO.getCaptchaKey(), loginDTO.getCaptchaCode());
@@ -49,6 +55,13 @@ public class LoginServiceImpl implements LoginService {
         }
         // 签发令牌
         return jwtUtil.generateToken(user.getId());
+    }
+
+    @Override
+    public void logout(String token) {
+        jwtUtil.validateToken(token);
+        long remainingMillis = jwtUtil.getRemainingMillis(token);
+        tokenBlacklistService.addToBlacklist(token, Duration.ofMillis(remainingMillis));
     }
 
 }

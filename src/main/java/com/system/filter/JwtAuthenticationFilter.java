@@ -2,6 +2,7 @@ package com.system.filter;
 
 import com.system.common.BusinessException;
 import com.system.common.SystemConstants;
+import com.system.service.TokenBlacklistService;
 import com.system.util.JwtUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
@@ -27,6 +28,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
     @Resource
     private UserDetailsService userDetailsService;
+    @Resource
+    private TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -41,6 +44,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(SystemConstants.BEARER_PREFIX_LENGTH);
         try {
             jwtUtil.validateToken(token);
+            if (tokenBlacklistService.isBlacklisted(token)) {
+                throw new BusinessException("登录已退出，请重新登录");
+            }
             Long userId = jwtUtil.getUserId(token);
             // 根据userId加载用户信息与权限
             UserDetails userDetails = userDetailsService.loadUserByUsername(userId.toString());

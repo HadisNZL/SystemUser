@@ -45,12 +45,16 @@ public class JwtUtil {
      * 根据Token获取用户ID
      */
     public Long getUserId(String token) {
-        Claims claims = Jwts.parser()
-                .verifyWith(getSecretKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        Claims claims = parseClaims(token);
         return Long.parseLong(claims.getSubject());
+    }
+
+    /**
+     * 获取Token剩余有效毫秒数。
+     */
+    public long getRemainingMillis(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        return expiration.getTime() - System.currentTimeMillis();
     }
 
     /**
@@ -70,6 +74,14 @@ public class JwtUtil {
         } catch (Exception e) {
             throw new BusinessException("登录校验失败，请重新登录");
         }
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getSecretKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
 }

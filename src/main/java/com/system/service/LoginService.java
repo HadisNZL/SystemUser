@@ -7,4 +7,6 @@ public interface LoginService {
      * 登录接口
      */
     String login(LoginDTO loginDTO);
+
+    void logout(String token);
 }
