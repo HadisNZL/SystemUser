@@ -1,6 +1,7 @@
 HELP.md
 target/
 upload/
+dump.rdb
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

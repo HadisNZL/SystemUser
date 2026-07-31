@@ -190,6 +190,8 @@ curl -X POST http://localhost:8080/sys/login \
 
 验证码使用 Redis 保存，key 前缀为 `captcha:`，2 分钟过期，校验后立即删除。
 
+用户权限标识也使用 Redis 缓存，key 前缀为 `user:permissions:`，30 分钟过期。用户分配角色、角色分配权限、角色状态变化、菜单权限变化时会清理权限缓存。
+
 访问受保护接口：
 
 ```bash

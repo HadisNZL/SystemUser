@@ -9,6 +9,7 @@ import com.system.dto.MenuAddDTO;
 import com.system.dto.MenuUpdateDTO;
 import com.system.entity.SysPermission;
 import com.system.mapper.SysPermissionMapper;
+import com.system.service.PermissionCacheService;
 import com.system.service.SysMenuService;
 import com.system.util.SecurityUtil;
 import com.system.vo.MenuTreeVO;
@@ -32,6 +33,9 @@ public class SysMenuServiceImpl implements SysMenuService {
 
     @Resource
     private MenuConvert menuConvert;
+
+    @Resource
+    private PermissionCacheService permissionCacheService;
 
     @Override
     public List<MenuTreeVO> getMenuTree() {
@@ -66,6 +70,7 @@ public class SysMenuServiceImpl implements SysMenuService {
         if (rows <= 0) {
             throw new BusinessException("新增菜单失败");
         }
+        permissionCacheService.clearAllUserPermissionCache();
     }
 
     @Override
@@ -86,6 +91,7 @@ public class SysMenuServiceImpl implements SysMenuService {
         if (rows <= 0) {
             throw new BusinessException("修改菜单失败");
         }
+        permissionCacheService.clearAllUserPermissionCache();
     }
 
     @Override
@@ -104,6 +110,7 @@ public class SysMenuServiceImpl implements SysMenuService {
         if (rows <= 0) {
             throw new BusinessException(ResultCode.DATA_NOT_FOUND, "菜单不存在");
         }
+        permissionCacheService.clearAllUserPermissionCache();
     }
 
     private List<MenuTreeVO> buildTree(List<MenuTreeVO> menuList) {

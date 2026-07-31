@@ -22,6 +22,7 @@ import com.system.entity.SysUserRole;
 import com.system.mapper.SysRoleMapper;
 import com.system.mapper.SysUserMapper;
 import com.system.mapper.SysUserRoleMapper;
+import com.system.service.PermissionCacheService;
 import com.system.service.SysUserService;
 import com.system.util.SecurityUtil;
 import com.system.util.UserExcelUtil;
@@ -83,6 +84,9 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Resource
     private SysUserRoleMapper sysUserRoleMapper;
+
+    @Resource
+    private PermissionCacheService permissionCacheService;
 
     @Override
     public UserDetailVO getUserDetail(Long id) {
@@ -278,6 +282,7 @@ public class SysUserServiceImpl implements SysUserService {
                 throw new BusinessException("分配角色失败");
             }
         }
+        permissionCacheService.clearUserPermissionCache(id);
     }
 
     /**
@@ -303,6 +308,7 @@ public class SysUserServiceImpl implements SysUserService {
         if (rows <= 0) {
             throw new BusinessException("删除用户失败，ID不存在");
         }
+        permissionCacheService.clearUserPermissionCache(id);
     }
 
     /**
@@ -323,6 +329,7 @@ public class SysUserServiceImpl implements SysUserService {
         if (rows <= 0) {
             throw new BusinessException("物理删除失败，ID不存在");
         }
+        permissionCacheService.clearUserPermissionCache(id);
     }
 
     private void checkUserExists(Long id) {

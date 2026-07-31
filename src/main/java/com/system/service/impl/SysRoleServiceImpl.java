@@ -19,6 +19,7 @@ import com.system.entity.SysRolePermission;
 import com.system.mapper.SysPermissionMapper;
 import com.system.mapper.SysRoleMapper;
 import com.system.mapper.SysRolePermissionMapper;
+import com.system.service.PermissionCacheService;
 import com.system.service.SysRoleService;
 import com.system.vo.MenuTreeVO;
 import com.system.vo.RolePageVO;
@@ -50,6 +51,9 @@ public class SysRoleServiceImpl implements SysRoleService {
     @Resource
     private SysRolePermissionMapper sysRolePermissionMapper;
 
+    @Resource
+    private PermissionCacheService permissionCacheService;
+
     @Override
     public PageResult<RolePageVO> getRolePage(RoleSearchDTO dto, Integer pageNum, Integer pageSize) {
         Page<SysRole> page = new Page<>(pageNum, pageSize);
@@ -79,6 +83,7 @@ public class SysRoleServiceImpl implements SysRoleService {
         if (rows <= 0) {
             throw new BusinessException("新增角色失败");
         }
+        permissionCacheService.clearAllUserPermissionCache();
     }
 
     @Override
@@ -93,6 +98,7 @@ public class SysRoleServiceImpl implements SysRoleService {
         if (rows <= 0) {
             throw new BusinessException("修改角色状态失败");
         }
+        permissionCacheService.clearAllUserPermissionCache();
     }
 
     @Override
@@ -125,6 +131,7 @@ public class SysRoleServiceImpl implements SysRoleService {
                 throw new BusinessException("分配权限失败");
             }
         }
+        permissionCacheService.clearAllUserPermissionCache();
     }
 
     @Override
@@ -142,6 +149,7 @@ public class SysRoleServiceImpl implements SysRoleService {
         if (rows <= 0) {
             throw new BusinessException("修改角色失败");
         }
+        permissionCacheService.clearAllUserPermissionCache();
     }
 
     @Override
@@ -151,6 +159,7 @@ public class SysRoleServiceImpl implements SysRoleService {
         if (rows <= 0) {
             throw new BusinessException(ResultCode.DATA_NOT_FOUND, "角色不存在");
         }
+        permissionCacheService.clearAllUserPermissionCache();
     }
 
     private List<MenuTreeVO> buildTree(List<MenuTreeVO> permissionList) {

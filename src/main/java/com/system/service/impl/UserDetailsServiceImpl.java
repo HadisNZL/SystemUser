@@ -5,6 +5,7 @@ import com.system.common.SystemConstants;
 import com.system.entity.SysUser;
 import com.system.mapper.SysPermissionMapper;
 import com.system.mapper.SysUserMapper;
+import com.system.service.PermissionCacheService;
 import jakarta.annotation.Resource;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -24,6 +25,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private SysUserMapper sysUserMapper;
     @Resource
     private SysPermissionMapper sysPermissionMapper;
+    @Resource
+    private PermissionCacheService permissionCacheService;
 
     @Override
     public UserDetails loadUserByUsername(String userIdStr) throws UsernameNotFoundException {
@@ -35,8 +38,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         if (SystemConstants.USER_DISABLE.equals(user.getStatus())) {
             throw new BusinessException("账号已禁用");
         }
-        // =========核心：查询当前用户所有权限标识 sys:user:list 等=========
-        List<String> permissionKeyList = sysPermissionMapper.selectUserPermissionKeys(userId);
+        // 查询并缓存当前用户权限标识
+        List<String> permissionKeyList = permissionCacheService.getUserPermissionKeys(userId,
+                () -> sysPermissionMapper.selectUserPermissionKeys(userId));
         List<GrantedAuthority> authorities = permissionKeyList.stream()
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
