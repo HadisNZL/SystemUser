@@ -37,6 +37,10 @@ knife4j:
     language: zh_cn # 界面语言设置为中文
 
 system:
+  info:
+    name: admin-system
+    description: 企业级后台管理系统
+    version: 0.0.1
   file:
     upload-path: ./upload
   operation-log:

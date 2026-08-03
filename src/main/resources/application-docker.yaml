@@ -2,6 +2,9 @@ server:
   port: 8080
 
 spring:
+  config:
+    import:
+      - optional:nacos:admin-system-docker.yaml
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://mysql:3306/admin_system?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true
@@ -22,6 +25,10 @@ spring:
     nacos:
       discovery:
         server-addr: nacos:8848
+      config:
+        server-addr: nacos:8848
+        file-extension: yaml
+        group: DEFAULT_GROUP
 
 logging:
   level:

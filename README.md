@@ -226,6 +226,28 @@ http://localhost:8848/nacos
 
 应用启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `admin-system`。
 
+Nacos 配置中心本地开发使用的 Data ID：
+
+```text
+admin-system-dev.yaml
+```
+
+示例配置：
+
+```yaml
+system:
+  info:
+    name: admin-system
+    description: Nacos配置中心测试
+    version: 0.0.1-dev
+```
+
+验证接口：
+
+```text
+GET http://localhost:8080/sys/config/info
+```
+
 应用健康检查：
 
 ```text
