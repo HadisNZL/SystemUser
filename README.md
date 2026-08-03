@@ -36,6 +36,7 @@
 - Redis 验证码缓存
 - Redis 接口限流
 - RabbitMQ 操作日志消息队列
+- Spring Task 定时清理历史操作日志
 
 ## 项目结构
 
@@ -323,6 +324,15 @@ routing:  admin.operation.log
 
 如果 RabbitMQ 未启动，主业务接口不受影响，但操作日志消息发送失败，不会写入 `sys_operation_log`。
 
+操作日志定时清理使用 Spring Task，默认保留 90 天，每天凌晨 3 点执行。配置项：
+
+```yaml
+system:
+  operation-log:
+    retention-days: 90
+    clean-cron: "0 0 3 * * ?"
+```
+
 访问受保护接口：
 
 ```bash
@@ -457,6 +467,8 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `RedisRateLimitServiceImplTest`：Redis 接口限流计数与拦截
 - `OperationLogMessageProducerTest`：操作日志消息发送
 - `OperationLogMessageConsumerTest`：操作日志消息消费入库
+- `OperationLogCleanServiceImplTest`：历史操作日志清理
+- `OperationLogCleanTaskTest`：定时清理任务触发
 - `AdminSystemApplicationTests`：Spring Boot 上下文启动
 
 ## 常见问题

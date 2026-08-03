@@ -39,3 +39,8 @@ knife4j:
 system:
   file:
     upload-path: ./upload
+  operation-log:
+    # 操作日志保留天数
+    retention-days: 90
+    # 每天凌晨3点清理历史操作日志
+    clean-cron: "0 0 3 * * ?"
