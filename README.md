@@ -240,6 +240,19 @@ GET  http://localhost:9000/sys/user/search_list?status=1&pageNum=1&pageSize=10
 
 这两个请求会先进入 `gateway-service`，再通过 Nacos 服务发现转发到 `admin-system`。
 
+网关统一能力：
+
+```text
+统一跨域：前端请求统一访问 9000，由 gateway-service 处理 CORS
+请求日志：每个经过网关的请求都会记录 method/path/status/cost/clientIp
+```
+
+本地查看网关日志：
+
+```bash
+./scripts/dev.sh logs
+```
+
 Nacos 配置中心本地开发使用的 Data ID：
 
 ```text
