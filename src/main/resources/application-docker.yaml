@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://mysql:3306/admin_system?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true
+    username: root
+    password: ${DB_PWD:123456}
+  data:
+    redis:
+      host: redis
+      port: 6379
+      database: 0
+      timeout: 3s
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PWD:guest}
+
+logging:
+  level:
+    root: info
+    com.system: info
+
+knife4j:
+  production: false
+
+jwt:
+  secret: ${JWT_SECRET:abc123456abc123456abc123456abc123456}
+  expire: ${JWT_EXPIRE:7200}

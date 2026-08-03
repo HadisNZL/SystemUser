@@ -147,10 +147,12 @@ BCrypt 每次生成的密文都不同，这是正常现象。只要 `matches("12
 ./mvnw spring-boot:run
 ```
 
-开发环境依赖 MySQL、Redis、RabbitMQ，项目根目录已提供 Docker Compose 编排：
+开发环境依赖 MySQL、Redis、RabbitMQ，项目根目录已提供 Docker Compose 编排，也支持把后端应用一起容器化运行：
 
 ```text
+Dockerfile
 docker-compose.yml
+src/main/resources/application-docker.yaml
 docker/mysql/conf/my.cnf
 docker/mysql/init/
 docker/mysql/backup/
@@ -164,15 +166,32 @@ docker --version
 docker compose version
 ```
 
-本地启动中间件：
+本地开发时，常用方式是只启动中间件，后端仍用 IDEA 或 Maven 启动：
 
 ```bash
-docker compose up -d
+docker compose up -d mysql redis rabbitmq
+./mvnw spring-boot:run
 ```
 
-默认连接信息：
+完整 Docker 方式启动后端和中间件：
+
+```bash
+./mvnw clean package -DskipTests
+docker compose up -d --build
+```
+
+完整 Docker 方式使用 `docker` profile，容器内连接地址使用 Compose 服务名：
 
 ```text
+MySQL:    mysql:3306
+Redis:    redis:6379
+RabbitMQ: rabbitmq:5672
+```
+
+宿主机访问端口：
+
+```text
+后端接口: http://localhost:8080
 MySQL:    127.0.0.1:3306 root / 123456
 Redis:    127.0.0.1:6379
 RabbitMQ: 127.0.0.1:5672 guest / guest
@@ -190,6 +209,7 @@ Docker Compose 使用具名卷保存真实数据：
 admin_mysql_data
 admin_redis_data
 admin_rabbitmq_data
+admin_app_upload
 ```
 
 配置、初始化 SQL、备份目录放在项目 `docker/` 目录，真实数据不放项目目录。
@@ -220,7 +240,7 @@ brew services stop redis
 启动 Docker 中间件：
 
 ```bash
-docker compose up -d
+docker compose up -d mysql redis rabbitmq
 ```
 
 创建数据库：
@@ -260,6 +280,7 @@ brew uninstall redis
 ```bash
 docker compose ps
 docker compose logs -f
+docker compose logs -f admin-system
 docker compose stop
 docker compose start
 docker compose down
