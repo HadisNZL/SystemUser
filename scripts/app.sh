@@ -7,12 +7,12 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 APP_SERVICE="admin-system"
-MIDDLEWARE_SERVICES="mysql redis rabbitmq"
+MIDDLEWARE_SERVICES="mysql redis rabbitmq nacos"
 
 usage() {
   cat <<'USAGE'
 Usage:
-  ./scripts/app.sh middleware   Start MySQL, Redis and RabbitMQ only
+  ./scripts/app.sh middleware   Start MySQL, Redis, RabbitMQ and Nacos only
   ./scripts/app.sh build        Build Spring Boot jar and Docker image
   ./scripts/app.sh start        Start app and middleware
   ./scripts/app.sh stop         Stop all compose services

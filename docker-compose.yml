@@ -1,4 +1,4 @@
-# 本地开发编排：后端应用 + MySQL + Redis + RabbitMQ
+# 本地开发编排：后端应用 + MySQL + Redis + RabbitMQ + Nacos
 # 数据使用 Docker named volume 保存，配置/初始化/备份文件放在项目 docker 目录。
 services:
   admin-system:
@@ -78,8 +78,27 @@ services:
       # RabbitMQ数据，使用具名卷。
       - admin_rabbitmq_data:/var/lib/rabbitmq
 
+  nacos:
+    image: nacos/nacos-server:v2.3.2
+    container_name: admin-nacos
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      NACOS_AUTH_ENABLE: false
+      TZ: Asia/Shanghai
+    ports:
+      # Nacos控制台和OpenAPI端口：http://localhost:8848/nacos
+      - "8848:8848"
+      # Nacos 2.x gRPC通信端口，后续服务注册会用到。
+      - "9848:9848"
+      - "9849:9849"
+    volumes:
+      # Nacos本地数据，使用具名卷。
+      - admin_nacos_data:/home/nacos/data
+
 volumes:
   admin_app_upload:
   admin_mysql_data:
   admin_redis_data:
   admin_rabbitmq_data:
+  admin_nacos_data:

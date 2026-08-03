@@ -147,7 +147,7 @@ BCrypt 每次生成的密文都不同，这是正常现象。只要 `matches("12
 ./mvnw spring-boot:run
 ```
 
-开发环境依赖 MySQL、Redis、RabbitMQ，项目根目录已提供 Docker Compose 编排，也支持把后端应用一起容器化运行：
+开发环境依赖 MySQL、Redis、RabbitMQ，微服务阶段还会用到 Nacos。项目根目录已提供 Docker Compose 编排，也支持把后端应用一起容器化运行：
 
 ```text
 Dockerfile
@@ -169,7 +169,7 @@ docker compose version
 本地开发时，常用方式是只启动中间件，后端仍用 IDEA 或 Maven 启动：
 
 ```bash
-docker compose up -d mysql redis rabbitmq
+docker compose up -d mysql redis rabbitmq nacos
 ./mvnw spring-boot:run
 ```
 
@@ -199,6 +199,7 @@ docker compose up -d --build
 MySQL:    mysql:3306
 Redis:    redis:6379
 RabbitMQ: rabbitmq:5672
+Nacos:    nacos:8848
 ```
 
 宿主机访问端口：
@@ -208,12 +209,19 @@ RabbitMQ: rabbitmq:5672
 MySQL:    127.0.0.1:3306 root / 123456
 Redis:    127.0.0.1:6379
 RabbitMQ: 127.0.0.1:5672 guest / guest
+Nacos:    http://localhost:8848/nacos
 ```
 
 RabbitMQ 管理页面：
 
 ```text
 http://localhost:15672
+```
+
+Nacos 控制台：
+
+```text
+http://localhost:8848/nacos
 ```
 
 应用健康检查：
@@ -235,6 +243,7 @@ admin_mysql_data
 admin_redis_data
 admin_rabbitmq_data
 admin_app_upload
+admin_nacos_data
 ```
 
 配置、初始化 SQL、备份目录放在项目 `docker/` 目录，真实数据不放项目目录。
@@ -265,7 +274,7 @@ brew services stop redis
 启动 Docker 中间件：
 
 ```bash
-docker compose up -d mysql redis rabbitmq
+docker compose up -d mysql redis rabbitmq nacos
 ```
 
 创建数据库：
@@ -579,3 +588,4 @@ com.system.mapper.SysPermissionMapper
 - `01-项目开发说明.md`：认证鉴权流程、开发约定、测试流程、排错清单
 - `02-企业级后端学习规划.md`：阶段目标和项目进度
 - `03-单体部署运维手册.md`：部署、日志、端口、健康检查和备份恢复
+- `04-微服务拆分设计.md`：单体平滑演进到微服务的服务边界和拆分顺序

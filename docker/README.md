@@ -9,6 +9,7 @@ admin_mysql_data
 admin_redis_data
 admin_rabbitmq_data
 admin_app_upload
+admin_nacos_data
 ```
 
 目录说明：
@@ -23,8 +24,14 @@ redis/redis.conf Redis配置，可提交Git
 只启动中间件：
 
 ```bash
-docker compose up -d mysql redis rabbitmq
+docker compose up -d mysql redis rabbitmq nacos
 ./scripts/app.sh middleware
+```
+
+Nacos控制台：
+
+```text
+http://localhost:8848/nacos
 ```
 
 启动后端应用和中间件：
