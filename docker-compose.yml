@@ -1,0 +1,60 @@
+# 本地开发中间件编排：MySQL + Redis + RabbitMQ
+# 数据使用 Docker named volume 保存，配置/初始化/备份文件放在项目 docker 目录。
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: admin-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=+08:00
+    volumes:
+      # MySQL真实数据，使用具名卷，避免污染项目目录。
+      - admin_mysql_data:/var/lib/mysql
+      # MySQL配置文件，可提交到Git。
+      - ./docker/mysql/conf:/etc/mysql/conf.d
+      # 初始化SQL目录，仅在MySQL数据目录首次为空时自动执行。
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+      # 备份目录，用于放mysqldump导出的SQL文件，不提交真实备份。
+      - ./docker/mysql/backup:/backup
+
+  redis:
+    image: redis:7
+    container_name: admin-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      # Redis持久化数据，使用具名卷。
+      - admin_redis_data:/data
+      # Redis配置文件，可提交到Git。
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: admin-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      TZ: Asia/Shanghai
+    ports:
+      # 服务端口，Spring Boot连接这个端口。
+      - "5672:5672"
+      # 管理页面端口：http://localhost:15672
+      - "15672:15672"
+    volumes:
+      # RabbitMQ数据，使用具名卷。
+      - admin_rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  admin_mysql_data:
+  admin_redis_data:
+  admin_rabbitmq_data:

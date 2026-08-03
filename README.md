@@ -29,12 +29,13 @@
 - Jakarta Validation 参数校验
 - 统一响应码与全局异常处理
 - DTO / VO / Entity 分层
-- 操作日志注解与 AOP 入库
+- 操作日志注解与 RabbitMQ 异步入库
 - 本地文件上传下载
 - 用户 Excel 导入导出
 - 字典配置管理
 - Redis 验证码缓存
 - Redis 接口限流
+- RabbitMQ 操作日志消息队列
 
 ## 项目结构
 
@@ -50,6 +51,7 @@ src/main/java/com/system
 ├── filter                  Spring Security JWT Filter
 ├── handler                 MyBatis-Plus 自动填充处理器
 ├── mapper                  MyBatis Mapper
+├── mq                      RabbitMQ 消息生产与消费
 ├── security/handler        401 / 403 安全异常处理
 ├── service                 业务接口
 ├── service/impl            业务实现
@@ -144,17 +146,125 @@ BCrypt 每次生成的密文都不同，这是正常现象。只要 `matches("12
 ./mvnw spring-boot:run
 ```
 
-开发环境验证码依赖 Redis，默认连接：
+开发环境依赖 MySQL、Redis、RabbitMQ，项目根目录已提供 Docker Compose 编排：
 
 ```text
-127.0.0.1:6379
+docker-compose.yml
+docker/mysql/conf/my.cnf
+docker/mysql/init/
+docker/mysql/backup/
+docker/redis/redis.conf
 ```
 
-本地可先启动 Redis：
+如果本机没有 Docker，先安装 Docker Desktop，并确认：
 
 ```bash
-redis-server
+docker --version
+docker compose version
 ```
+
+本地启动中间件：
+
+```bash
+docker compose up -d
+```
+
+默认连接信息：
+
+```text
+MySQL:    127.0.0.1:3306 root / 123456
+Redis:    127.0.0.1:6379
+RabbitMQ: 127.0.0.1:5672 guest / guest
+```
+
+RabbitMQ 管理页面：
+
+```text
+http://localhost:15672
+```
+
+Docker Compose 使用具名卷保存真实数据：
+
+```text
+admin_mysql_data
+admin_redis_data
+admin_rabbitmq_data
+```
+
+配置、初始化 SQL、备份目录放在项目 `docker/` 目录，真实数据不放项目目录。
+
+### 从 brew MySQL / Redis 迁移到 Docker
+
+先备份当前 brew MySQL 数据：
+
+```bash
+mkdir -p ~/admin-system-backup
+mysqldump -u root -p --single-transaction --set-gtid-purged=OFF admin_system > ~/admin-system-backup/admin_system.sql
+```
+
+确认备份文件非空：
+
+```bash
+ls -lh ~/admin-system-backup/admin_system.sql
+head -n 20 ~/admin-system-backup/admin_system.sql
+```
+
+停止 brew 服务，释放端口：
+
+```bash
+brew services stop mysql
+brew services stop redis
+```
+
+启动 Docker 中间件：
+
+```bash
+docker compose up -d
+```
+
+创建数据库：
+
+```bash
+docker exec -it admin-mysql mysql -uroot -p123456
+```
+
+进入 MySQL 后执行：
+
+```sql
+CREATE DATABASE admin_system DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+EXIT;
+```
+
+导入备份：
+
+```bash
+docker exec -i admin-mysql mysql -uroot -p123456 admin_system < ~/admin-system-backup/admin_system.sql
+```
+
+验证数据：
+
+```bash
+docker exec -it admin-mysql mysql -uroot -p123456 -e "USE admin_system; SHOW TABLES;"
+```
+
+确认项目启动和接口测试都正常后，再卸载 brew 版本：
+
+```bash
+brew uninstall mysql
+brew uninstall redis
+```
+
+常用 Docker Compose 命令：
+
+```bash
+docker compose ps
+docker compose logs -f
+docker compose stop
+docker compose start
+docker compose down
+```
+
+不要随手执行 `docker compose down -v`，它会删除具名卷里的 MySQL / Redis / RabbitMQ 数据。
 
 切换 profile：
 
@@ -202,6 +312,16 @@ curl -X POST http://localhost:8080/sys/login \
 /captcha        每个 IP 60 秒最多 10 次
 /sys/file/upload 每个 IP 60 秒最多 20 次
 ```
+
+操作日志使用 RabbitMQ 异步入库，交换机、队列、路由键：
+
+```text
+exchange: admin.operation.log.exchange
+queue:    admin.operation.log.queue
+routing:  admin.operation.log
+```
+
+如果 RabbitMQ 未启动，主业务接口不受影响，但操作日志消息发送失败，不会写入 `sys_operation_log`。
 
 访问受保护接口：
 
@@ -335,6 +455,8 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 - `SysRoleControllerTest`：角色分页、新增、修改、删除接口响应
 - `SecurityHandlerTest`：未登录 401、无权限 403 返回
 - `RedisRateLimitServiceImplTest`：Redis 接口限流计数与拦截
+- `OperationLogMessageProducerTest`：操作日志消息发送
+- `OperationLogMessageConsumerTest`：操作日志消息消费入库
 - `AdminSystemApplicationTests`：Spring Boot 上下文启动
 
 ## 常见问题

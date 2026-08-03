@@ -2,6 +2,10 @@ HELP.md
 target/
 upload/
 dump.rdb
+docker/mysql/backup/*.sql
+docker/mysql/backup/*.dump
+docker/mysql/backup/*.gz
+docker/**/data/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

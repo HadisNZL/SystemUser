@@ -13,6 +13,11 @@ spring:
       port: 6379
       database: 0
       timeout: 3s
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
 
 # 开发环境开启 MyBatis-Plus 的 SQL 打印，方便调试
 mybatis-plus:

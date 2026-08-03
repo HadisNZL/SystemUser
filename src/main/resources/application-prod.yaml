@@ -11,6 +11,11 @@ spring:
     hikari:
       minimum-idle: 5
       maximum-pool-size: 20
+  rabbitmq:
+    host: ${RABBITMQ_HOST:rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PWD}
 
 # 生产环境关闭 MyBatis-Plus 的控制台 SQL 打印，保证性能和日志清爽
 mybatis-plus:

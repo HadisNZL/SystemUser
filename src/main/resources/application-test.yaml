@@ -7,6 +7,10 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/admin_system_test?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true
     username: ${DB_USER:root}
     password: ${DB_PWD:123456}
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
 
 # 测试环境同样可以开启 SQL 日志，或者使用 NoLogging 保持干净
 mybatis-plus:

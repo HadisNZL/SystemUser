@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.system.annotation.OperationLog;
 import com.system.entity.SysOperationLog;
-import com.system.mapper.SysOperationLogMapper;
+import com.system.mq.OperationLogMessageProducer;
 import com.system.util.SecurityUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +29,7 @@ public class OperationLogAspect {
     private static final int MAX_TEXT_LENGTH = 2000;
 
     @Resource
-    private SysOperationLogMapper sysOperationLogMapper;
+    private OperationLogMessageProducer operationLogMessageProducer;
 
     @Resource
     private ObjectMapper objectMapper;
@@ -54,11 +54,7 @@ public class OperationLogAspect {
     }
 
     private void saveOperationLog(SysOperationLog logEntity) {
-        try {
-            sysOperationLogMapper.insert(logEntity);
-        } catch (Exception e) {
-            log.error("保存操作日志失败", e);
-        }
+        operationLogMessageProducer.send(logEntity);
     }
 
     private SysOperationLog buildBaseLog(ProceedingJoinPoint joinPoint, OperationLog operationLog) {
