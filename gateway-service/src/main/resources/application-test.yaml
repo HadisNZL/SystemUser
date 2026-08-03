@@ -1,0 +1,12 @@
+spring:
+  cloud:
+    nacos:
+      config:
+        enabled: false
+      discovery:
+        enabled: false
+
+logging:
+  level:
+    root: info
+    com.system.gateway: info

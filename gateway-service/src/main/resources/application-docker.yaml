@@ -1,0 +1,17 @@
+spring:
+  config:
+    import:
+      - optional:nacos:gateway-service-docker.yaml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: nacos:8848
+      config:
+        server-addr: nacos:8848
+        file-extension: yaml
+        group: DEFAULT_GROUP
+
+logging:
+  level:
+    root: info
+    com.system.gateway: info

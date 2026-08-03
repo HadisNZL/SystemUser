@@ -2,6 +2,8 @@ HELP.md
 target/
 upload/
 dump.rdb
+.run/
+logs/dev/
 docker/mysql/backup/*.sql
 docker/mysql/backup/*.dump
 docker/mysql/backup/*.gz

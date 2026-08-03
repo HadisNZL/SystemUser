@@ -1,0 +1,17 @@
+spring:
+  config:
+    import:
+      - optional:nacos:gateway-service-prod.yaml
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:nacos:8848}
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:nacos:8848}
+        file-extension: yaml
+        group: DEFAULT_GROUP
+
+logging:
+  level:
+    root: warn
+    com.system.gateway: info

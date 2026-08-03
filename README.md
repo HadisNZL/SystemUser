@@ -152,6 +152,7 @@ BCrypt 每次生成的密文都不同，这是正常现象。只要 `matches("12
 ```text
 Dockerfile
 docker-compose.yml
+gateway-service/
 src/main/resources/application-docker.yaml
 docker/mysql/conf/my.cnf
 docker/mysql/init/
@@ -176,14 +177,16 @@ docker compose up -d mysql redis rabbitmq nacos
 也可以使用脚本：
 
 ```bash
-./scripts/app.sh middleware
-./mvnw spring-boot:run
+./scripts/dev.sh start
+./scripts/dev.sh stop
+./scripts/dev.sh logs
 ```
 
 完整 Docker 方式启动后端和中间件：
 
 ```bash
 ./mvnw clean package -DskipTests
+./mvnw -f gateway-service/pom.xml clean package -DskipTests
 docker compose up -d --build
 ```
 
@@ -205,6 +208,7 @@ Nacos:    nacos:8848
 宿主机访问端口：
 
 ```text
+网关入口: http://localhost:9000
 后端接口: http://localhost:8080
 MySQL:    127.0.0.1:3306 root / 123456
 Redis:    127.0.0.1:6379
@@ -225,6 +229,16 @@ http://localhost:8848/nacos
 ```
 
 应用启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `admin-system`。
+网关启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `gateway-service`。
+
+网关路由验证：
+
+```text
+POST http://localhost:9000/sys/login
+GET  http://localhost:9000/sys/user/search_list?status=1&pageNum=1&pageSize=10
+```
+
+这两个请求会先进入 `gateway-service`，再通过 Nacos 服务发现转发到 `admin-system`。
 
 Nacos 配置中心本地开发使用的 Data ID：
 
@@ -356,7 +370,13 @@ docker compose down
 ./scripts/app.sh restart
 ./scripts/app.sh logs
 ./scripts/app.sh ps
+./scripts/dev.sh start
+./scripts/dev.sh stop
+./scripts/dev.sh logs
+./scripts/dev.sh status
 ```
+
+`app.sh` 偏 Docker Compose 部署，`dev.sh` 偏本地开发。`dev.sh start` 会启动 Docker 中间件、本地 `admin-system` 和本地 `gateway-service`。
 
 切换 profile：
 

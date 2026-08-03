@@ -7,14 +7,15 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 APP_SERVICE="admin-system"
+GATEWAY_SERVICE="gateway-service"
 MIDDLEWARE_SERVICES="mysql redis rabbitmq nacos"
 
 usage() {
   cat <<'USAGE'
 Usage:
   ./scripts/app.sh middleware   Start MySQL, Redis, RabbitMQ and Nacos only
-  ./scripts/app.sh build        Build Spring Boot jar and Docker image
-  ./scripts/app.sh start        Start app and middleware
+  ./scripts/app.sh build        Build app/gateway jars and Docker images
+  ./scripts/app.sh start        Start app, gateway and middleware
   ./scripts/app.sh stop         Stop all compose services
   ./scripts/app.sh restart      Restart app and middleware
   ./scripts/app.sh logs         Follow app logs
@@ -38,6 +39,11 @@ build_app() {
   docker compose build "$APP_SERVICE"
 }
 
+build_gateway() {
+  ./mvnw -f gateway-service/pom.xml clean package -DskipTests
+  docker compose build "$GATEWAY_SERVICE"
+}
+
 case "${1:-}" in
   middleware)
     require_docker
@@ -46,10 +52,12 @@ case "${1:-}" in
   build)
     require_docker
     build_app
+    build_gateway
     ;;
   start)
     require_docker
     build_app
+    build_gateway
     docker compose up -d
     ;;
   stop)

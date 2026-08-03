@@ -38,8 +38,15 @@ http://localhost:8848/nacos
 
 ```bash
 ./mvnw clean package -DskipTests
+./mvnw -f gateway-service/pom.xml clean package -DskipTests
 docker compose up -d --build
 ./scripts/app.sh start
+```
+
+网关入口：
+
+```text
+http://localhost:9000
 ```
 
 停止：
