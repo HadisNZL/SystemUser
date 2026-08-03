@@ -79,7 +79,8 @@ services:
       - admin_rabbitmq_data:/var/lib/rabbitmq
 
   nacos:
-    image: nacos/nacos-server:v2.3.2
+    # Nacos 2.x注册中心，v2.5.3支持Apple Silicon的arm64镜像。
+    image: nacos/nacos-server:v2.5.3
     container_name: admin-nacos
     restart: unless-stopped
     environment:
