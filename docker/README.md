@@ -24,6 +24,7 @@ redis/redis.conf Redis配置，可提交Git
 
 ```bash
 docker compose up -d mysql redis rabbitmq
+./scripts/app.sh middleware
 ```
 
 启动后端应用和中间件：
@@ -31,6 +32,7 @@ docker compose up -d mysql redis rabbitmq
 ```bash
 ./mvnw clean package -DskipTests
 docker compose up -d --build
+./scripts/app.sh start
 ```
 
 停止：

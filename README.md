@@ -173,11 +173,24 @@ docker compose up -d mysql redis rabbitmq
 ./mvnw spring-boot:run
 ```
 
+也可以使用脚本：
+
+```bash
+./scripts/app.sh middleware
+./mvnw spring-boot:run
+```
+
 完整 Docker 方式启动后端和中间件：
 
 ```bash
 ./mvnw clean package -DskipTests
 docker compose up -d --build
+```
+
+也可以使用脚本：
+
+```bash
+./scripts/app.sh start
 ```
 
 完整 Docker 方式使用 `docker` profile，容器内连接地址使用 Compose 服务名：
@@ -287,6 +300,18 @@ docker compose down
 ```
 
 不要随手执行 `docker compose down -v`，它会删除具名卷里的 MySQL / Redis / RabbitMQ 数据。
+
+常用脚本命令：
+
+```bash
+./scripts/app.sh middleware
+./scripts/app.sh build
+./scripts/app.sh start
+./scripts/app.sh stop
+./scripts/app.sh restart
+./scripts/app.sh logs
+./scripts/app.sh ps
+```
 
 切换 profile：
 
