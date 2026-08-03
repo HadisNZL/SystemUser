@@ -18,6 +18,10 @@ spring:
     port: 5672
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PWD:guest}
+  cloud:
+    nacos:
+      discovery:
+        server-addr: nacos:8848
 
 logging:
   level:

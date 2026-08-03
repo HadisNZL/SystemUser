@@ -12,6 +12,7 @@ services:
       - mysql
       - redis
       - rabbitmq
+      - nacos
     environment:
       SPRING_PROFILES_ACTIVE: docker
       DB_PWD: 123456

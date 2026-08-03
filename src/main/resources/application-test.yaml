@@ -11,6 +11,10 @@ spring:
     listener:
       simple:
         auto-startup: false
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
 
 # 测试环境同样可以开启 SQL 日志，或者使用 NoLogging 保持干净
 mybatis-plus:

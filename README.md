@@ -224,6 +224,8 @@ Nacos 控制台：
 http://localhost:8848/nacos
 ```
 
+应用启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `admin-system`。
+
 应用健康检查：
 
 ```text

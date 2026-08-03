@@ -18,6 +18,10 @@ spring:
     port: 5672
     username: guest
     password: guest
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
 
 # 开发环境开启 MyBatis-Plus 的 SQL 打印，方便调试
 mybatis-plus:
