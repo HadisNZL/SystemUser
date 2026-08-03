@@ -61,6 +61,7 @@ public class SecurityConfig {
                         // 白名单，无需认证
                         .requestMatchers("/captcha").permitAll()
                         .requestMatchers("/sys/login").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/doc.html", "/v3/api-docs/**", "/webjars/**").permitAll()
                         // 其余接口必须认证
                         .anyRequest().authenticated()

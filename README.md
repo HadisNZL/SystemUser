@@ -216,6 +216,18 @@ RabbitMQ 管理页面：
 http://localhost:15672
 ```
 
+应用健康检查：
+
+```text
+http://localhost:8080/actuator/health
+```
+
+正常响应示例：
+
+```json
+{"status":"UP"}
+```
+
 Docker Compose 使用具名卷保存真实数据：
 
 ```text

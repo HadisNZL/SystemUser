@@ -44,3 +44,13 @@ system:
     retention-days: 90
     # 每天凌晨3点清理历史操作日志
     clean-cron: "0 0 3 * * ?"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # 仅暴露健康检查端点，避免泄露过多运行信息。
+        include: health
+  endpoint:
+    health:
+      show-details: never

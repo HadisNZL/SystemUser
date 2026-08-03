@@ -111,6 +111,12 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
+        <!-- Actuator 健康检查，用于部署探活 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <!-- AOP 切面，用于操作日志等横切能力 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
