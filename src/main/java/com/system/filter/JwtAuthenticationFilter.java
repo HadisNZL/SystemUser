@@ -24,6 +24,9 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final String GATEWAY_FORWARDED_HEADER = "X-Gateway-Forwarded";
+    private static final String USER_ID_HEADER = "X-User-Id";
+
     @Resource
     private JwtUtil jwtUtil;
     @Resource
@@ -36,6 +39,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader(SystemConstants.AUTHORIZATION_HEADER);
+        // 网关已完成JWT校验时，下游服务从透传头恢复登录上下文。
+        if (authHeader == null || !authHeader.startsWith(SystemConstants.BEARER_PREFIX)) {
+            if (restoreGatewayAuthentication(request)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+        }
+
         // 无token直接放行，由Security后续判断是否需要认证
         if (authHeader == null || !authHeader.startsWith(SystemConstants.BEARER_PREFIX)) {
             filterChain.doFilter(request, response);
@@ -58,5 +69,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throw new BusinessException(e.getMessage());
         }
         filterChain.doFilter(request, response);
+    }
+
+    private boolean restoreGatewayAuthentication(HttpServletRequest request) {
+        String gatewayForwarded = request.getHeader(GATEWAY_FORWARDED_HEADER);
+        String userId = request.getHeader(USER_ID_HEADER);
+        if (!"true".equalsIgnoreCase(gatewayForwarded) || userId == null || userId.isBlank()) {
+            return false;
+        }
+        UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        return true;
     }
 }

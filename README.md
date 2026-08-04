@@ -245,6 +245,8 @@ GET  http://localhost:9000/sys/user/search_list?status=1&pageNum=1&pageSize=10
 ```text
 统一跨域：前端请求统一访问 9000，由 gateway-service 处理 CORS
 请求日志：每个经过网关的请求都会记录 method/path/status/cost/clientIp
+统一鉴权：非白名单请求必须携带有效 Authorization
+身份透传：网关校验 token 后透传 X-Gateway-Forwarded / X-User-Id
 ```
 
 本地查看网关日志：

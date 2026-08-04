@@ -39,7 +39,7 @@ public class GatewayRequestLogFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return Ordered.LOWEST_PRECEDENCE;
+        return Ordered.HIGHEST_PRECEDENCE;
     }
 
     private String getClientIp(ServerHttpRequest request) {
