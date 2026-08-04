@@ -29,6 +29,10 @@ spring:
                   - token
                 maxAge: 3600
           routes:
+            - id: auth-service-route
+              uri: lb://auth-service
+              predicates:
+                - Path=/auth/**
             - id: admin-system-route
               uri: lb://admin-system
               predicates:

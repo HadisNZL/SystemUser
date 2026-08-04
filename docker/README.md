@@ -38,6 +38,7 @@ http://localhost:8848/nacos
 
 ```bash
 ./mvnw clean package -DskipTests
+./mvnw -f auth-service/pom.xml clean package -DskipTests
 ./mvnw -f gateway-service/pom.xml clean package -DskipTests
 docker compose up -d --build
 ./scripts/app.sh start
@@ -47,6 +48,13 @@ docker compose up -d --build
 
 ```text
 http://localhost:9000
+```
+
+OpenFeign演示接口：
+
+```text
+http://localhost:9000/auth/demo/ping
+http://localhost:9101/auth/demo/ping
 ```
 
 停止：

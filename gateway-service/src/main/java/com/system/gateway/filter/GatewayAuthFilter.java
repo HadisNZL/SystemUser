@@ -31,6 +31,7 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
     private static final List<String> WHITE_LIST = List.of(
             "/sys/login",
             "/captcha",
+            "/auth/demo/**",
             "/doc.html",
             "/v3/api-docs/**",
             "/webjars/**",

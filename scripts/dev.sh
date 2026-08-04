@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Local development helper: start middleware, admin-system and gateway-service.
+# Local development helper: start middleware, admin-system, auth-service and gateway-service.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -10,22 +10,24 @@ RUN_DIR="$ROOT_DIR/.run"
 LOG_DIR="$ROOT_DIR/logs/dev"
 
 ADMIN_PID_FILE="$RUN_DIR/admin-system.pid"
+AUTH_PID_FILE="$RUN_DIR/auth-service.pid"
 GATEWAY_PID_FILE="$RUN_DIR/gateway-service.pid"
 ADMIN_LOG="$LOG_DIR/admin-system.log"
+AUTH_LOG="$LOG_DIR/auth-service.log"
 GATEWAY_LOG="$LOG_DIR/gateway-service.log"
 
 usage() {
   cat <<'USAGE'
 Usage:
-  ./scripts/dev.sh start     Start middleware, admin-system and gateway-service
-  ./scripts/dev.sh stop      Stop admin-system and gateway-service
+  ./scripts/dev.sh start     Start middleware, admin-system, auth-service and gateway-service
+  ./scripts/dev.sh stop      Stop admin-system, auth-service and gateway-service
   ./scripts/dev.sh restart   Restart local Spring Boot services
   ./scripts/dev.sh status    Show local service status
-  ./scripts/dev.sh logs      Follow admin-system and gateway-service logs
+  ./scripts/dev.sh logs      Follow admin-system, auth-service and gateway-service logs
 
 Notes:
   - Middleware still uses Docker Compose.
-  - admin-system runs on 8080, gateway-service runs on 9000.
+  - admin-system runs on 8080, auth-service runs on 9101, gateway-service runs on 9000.
 USAGE
 }
 
@@ -58,6 +60,23 @@ start_admin() {
   SPRING_PROFILES_ACTIVE=dev nohup ./mvnw spring-boot:run > "$ADMIN_LOG" 2>&1 &
   echo $! > "$ADMIN_PID_FILE"
   echo "admin-system pid=$(cat "$ADMIN_PID_FILE"), log=$ADMIN_LOG"
+}
+
+start_auth() {
+  if is_running "$AUTH_PID_FILE"; then
+    echo "auth-service is already running, pid=$(cat "$AUTH_PID_FILE")"
+    return
+  fi
+
+  if is_port_used 9101; then
+    echo "auth-service port 9101 is already in use. If IDEA started it, keep using that process."
+    return
+  fi
+
+  echo "Starting auth-service on 9101..."
+  SPRING_PROFILES_ACTIVE=dev nohup ./mvnw -f auth-service/pom.xml spring-boot:run > "$AUTH_LOG" 2>&1 &
+  echo $! > "$AUTH_PID_FILE"
+  echo "auth-service pid=$(cat "$AUTH_PID_FILE"), log=$AUTH_LOG"
 }
 
 start_gateway() {
@@ -126,11 +145,13 @@ start_all() {
   prepare_dirs
   ./scripts/app.sh middleware
   start_admin
+  start_auth
   start_gateway
 }
 
 stop_all() {
   stop_by_pid_file "gateway-service" "$GATEWAY_PID_FILE"
+  stop_by_pid_file "auth-service" "$AUTH_PID_FILE"
   stop_by_pid_file "admin-system" "$ADMIN_PID_FILE"
 }
 
@@ -147,12 +168,13 @@ case "${1:-}" in
     ;;
   status)
     status_by_pid_file "admin-system" "$ADMIN_PID_FILE" 8080
+    status_by_pid_file "auth-service" "$AUTH_PID_FILE" 9101
     status_by_pid_file "gateway-service" "$GATEWAY_PID_FILE" 9000
     ;;
   logs)
     prepare_dirs
-    touch "$ADMIN_LOG" "$GATEWAY_LOG"
-    tail -f "$ADMIN_LOG" "$GATEWAY_LOG"
+    touch "$ADMIN_LOG" "$AUTH_LOG" "$GATEWAY_LOG"
+    tail -f "$ADMIN_LOG" "$AUTH_LOG" "$GATEWAY_LOG"
     ;;
   -h|--help|help|"")
     usage

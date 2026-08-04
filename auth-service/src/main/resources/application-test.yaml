@@ -1,0 +1,10 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+
+logging:
+  level:
+    root: info
+    com.system.auth: info

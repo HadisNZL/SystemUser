@@ -7,6 +7,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 APP_SERVICE="admin-system"
+AUTH_SERVICE="auth-service"
 GATEWAY_SERVICE="gateway-service"
 MIDDLEWARE_SERVICES="mysql redis rabbitmq nacos"
 
@@ -14,11 +15,11 @@ usage() {
   cat <<'USAGE'
 Usage:
   ./scripts/app.sh middleware   Start MySQL, Redis, RabbitMQ and Nacos only
-  ./scripts/app.sh build        Build app/gateway jars and Docker images
-  ./scripts/app.sh start        Start app, gateway and middleware
+  ./scripts/app.sh build        Build app/auth/gateway jars and Docker images
+  ./scripts/app.sh start        Start app, auth, gateway and middleware
   ./scripts/app.sh stop         Stop all compose services
-  ./scripts/app.sh restart      Restart app and middleware
-  ./scripts/app.sh logs         Follow app logs
+  ./scripts/app.sh restart      Restart all compose services
+  ./scripts/app.sh logs         Follow app/auth/gateway logs
   ./scripts/app.sh ps           Show compose service status
 
 Notes:
@@ -39,6 +40,11 @@ build_app() {
   docker compose build "$APP_SERVICE"
 }
 
+build_auth() {
+  ./mvnw -f auth-service/pom.xml clean package -DskipTests
+  docker compose build "$AUTH_SERVICE"
+}
+
 build_gateway() {
   ./mvnw -f gateway-service/pom.xml clean package -DskipTests
   docker compose build "$GATEWAY_SERVICE"
@@ -52,11 +58,13 @@ case "${1:-}" in
   build)
     require_docker
     build_app
+    build_auth
     build_gateway
     ;;
   start)
     require_docker
     build_app
+    build_auth
     build_gateway
     docker compose up -d
     ;;
@@ -70,7 +78,7 @@ case "${1:-}" in
     ;;
   logs)
     require_docker
-    docker compose logs -f "$APP_SERVICE"
+    docker compose logs -f "$APP_SERVICE" "$AUTH_SERVICE" "$GATEWAY_SERVICE"
     ;;
   ps)
     require_docker

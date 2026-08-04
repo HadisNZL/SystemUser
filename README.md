@@ -152,6 +152,7 @@ BCrypt 每次生成的密文都不同，这是正常现象。只要 `matches("12
 ```text
 Dockerfile
 docker-compose.yml
+auth-service/
 gateway-service/
 src/main/resources/application-docker.yaml
 docker/mysql/conf/my.cnf
@@ -186,6 +187,7 @@ docker compose up -d mysql redis rabbitmq nacos
 
 ```bash
 ./mvnw clean package -DskipTests
+./mvnw -f auth-service/pom.xml clean package -DskipTests
 ./mvnw -f gateway-service/pom.xml clean package -DskipTests
 docker compose up -d --build
 ```
@@ -209,6 +211,7 @@ Nacos:    nacos:8848
 
 ```text
 网关入口: http://localhost:9000
+认证服务: http://localhost:9101
 后端接口: http://localhost:8080
 MySQL:    127.0.0.1:3306 root / 123456
 Redis:    127.0.0.1:6379
@@ -229,6 +232,7 @@ http://localhost:8848/nacos
 ```
 
 应用启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `admin-system`。
+认证服务启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `auth-service`。
 网关启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `gateway-service`。
 
 网关路由验证：
@@ -239,6 +243,28 @@ GET  http://localhost:9000/sys/user/search_list?status=1&pageNum=1&pageSize=10
 ```
 
 这两个请求会先进入 `gateway-service`，再通过 Nacos 服务发现转发到 `admin-system`。
+
+OpenFeign 服务调用验证：
+
+```text
+GET http://localhost:9000/auth/demo/ping
+GET http://localhost:9101/auth/demo/ping
+```
+
+调用链路：
+
+```text
+gateway-service -> auth-service -> OpenFeign -> admin-system
+```
+
+Gateway 访问 auth-service 的方式：
+
+```text
+1. auth-service 启动后，以服务名 auth-service 注册到 Nacos
+2. gateway-service 配置 /auth/** 路由，uri 使用 lb://auth-service
+3. lb:// 表示通过服务发现和负载均衡找服务，不写死 localhost:9101
+4. 请求 http://localhost:9000/auth/demo/ping 会被转发到 auth-service
+```
 
 网关统一能力：
 
@@ -391,7 +417,7 @@ docker compose down
 ./scripts/dev.sh status
 ```
 
-`app.sh` 偏 Docker Compose 部署，`dev.sh` 偏本地开发。`dev.sh start` 会启动 Docker 中间件、本地 `admin-system` 和本地 `gateway-service`。
+`app.sh` 偏 Docker Compose 部署，`dev.sh` 偏本地开发。`dev.sh start` 会启动 Docker 中间件、本地 `admin-system`、`auth-service` 和 `gateway-service`。
 
 切换 profile：
 

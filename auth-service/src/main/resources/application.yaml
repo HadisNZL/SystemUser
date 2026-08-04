@@ -1,0 +1,17 @@
+server:
+  port: 9101
+
+spring:
+  application:
+    name: auth-service
+  profiles:
+    active: dev
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
