@@ -49,6 +49,7 @@
 - 网关统一聚合 OpenAPI 接口文档
 - Sentinel 核心接口 QPS 限流
 - OpenFeign 调用降级与网关异常统一响应
+- Nacos 动态下发 OpenFeign Sentinel 熔断规则
 
 ## 项目结构
 
@@ -346,7 +347,7 @@ GET  /system/user/search_list      20 QPS
 POST /file/upload                   3 QPS
 ```
 
-阈值可通过 `SENTINEL_LOGIN_QPS`、`SENTINEL_USER_SEARCH_QPS`、`SENTINEL_FILE_UPLOAD_QPS` 调整。限流返回 HTTP 429；Feign 下游不可用或网关无法找到服务实例时返回 HTTP 503。Sentinel 状态可通过各服务 `/actuator/sentinel` 查看，日志目录可用 `SENTINEL_LOG_DIR` 调整。
+阈值可通过 `SENTINEL_LOGIN_QPS`、`SENTINEL_USER_SEARCH_QPS`、`SENTINEL_FILE_UPLOAD_QPS` 调整。限流返回 HTTP 429；Feign 下游不可用或网关无法找到服务实例时返回 HTTP 503。`auth-service`、`file-service`、`log-service` 已支持从 Nacos 动态加载 Feign 降级规则。Sentinel 状态可通过各服务 `/actuator/sentinel` 查看，日志目录可用 `SENTINEL_LOG_DIR` 调整。
 
 Docker Compose 使用具名卷保存真实数据：
 
