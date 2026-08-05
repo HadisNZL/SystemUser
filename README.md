@@ -12,6 +12,8 @@
 - Spring Security
 - Nacos 注册中心与配置中心
 - OpenFeign 服务调用
+- Micrometer Tracing + OpenTelemetry
+- Zipkin 3.6.1
 - Springdoc OpenAPI 2.8.17
 - Knife4j Gateway 5.2.1
 - Spring AOP
@@ -50,6 +52,8 @@
 - Sentinel 核心接口 QPS 限流
 - OpenFeign 调用降级与网关异常统一响应
 - Nacos 动态下发 OpenFeign Sentinel 熔断规则
+- traceId 贯穿 Gateway、OpenFeign、业务服务和 RabbitMQ
+- Zipkin 链路查询与服务依赖分析
 
 ## 项目结构
 
@@ -157,7 +161,7 @@ BCrypt 每次生成的密文都不同，这是正常现象。只要 `matches("12
 
 开发环境默认激活 `dev`，根工程是聚合工程，不再直接启动单体应用。
 
-开发环境依赖 MySQL、Redis、RabbitMQ 和 Nacos。项目根目录已提供 Docker Compose 编排，也支持把后端应用一起容器化运行：
+开发环境依赖 MySQL、Redis、RabbitMQ、Nacos 和 Zipkin。项目根目录已提供 Docker Compose 编排，也支持把后端应用一起容器化运行：
 
 ```text
 docker-compose.yml
@@ -184,13 +188,14 @@ docker compose version
 本地开发时，常用方式是只启动中间件，后端仍用 IDEA 或 Maven 启动：
 
 ```bash
-docker compose up -d mysql redis rabbitmq nacos
+docker compose up -d mysql redis rabbitmq nacos zipkin
 ```
 
 也可以使用脚本：
 
 ```bash
 ./scripts/dev.sh start
+./scripts/dev.sh services
 ./scripts/dev.sh status
 ./scripts/dev.sh restart
 ./scripts/dev.sh stop
@@ -219,6 +224,7 @@ MySQL:    mysql:3306
 Redis:    redis:6379
 RabbitMQ: rabbitmq:5672
 Nacos:    nacos:8848
+Zipkin:   zipkin:9411
 ```
 
 宿主机访问端口：
@@ -233,6 +239,7 @@ MySQL:    127.0.0.1:3306 root / 123456
 Redis:    127.0.0.1:6379
 RabbitMQ: 127.0.0.1:5672 guest / guest
 Nacos:    http://localhost:8848/nacos
+Zipkin:   http://localhost:9411
 ```
 
 RabbitMQ 管理页面：
@@ -245,6 +252,12 @@ Nacos 控制台：
 
 ```text
 http://localhost:8848/nacos
+```
+
+Zipkin 链路追踪：
+
+```text
+http://localhost:9411
 ```
 
 统一接口文档：
@@ -348,6 +361,8 @@ POST /file/upload                   3 QPS
 ```
 
 阈值可通过 `SENTINEL_LOGIN_QPS`、`SENTINEL_USER_SEARCH_QPS`、`SENTINEL_FILE_UPLOAD_QPS` 调整。限流返回 HTTP 429；Feign 下游不可用或网关无法找到服务实例时返回 HTTP 503。`auth-service`、`file-service`、`log-service` 已支持从 Nacos 动态加载 Feign 降级规则。Sentinel 状态可通过各服务 `/actuator/sentinel` 查看，日志目录可用 `SENTINEL_LOG_DIR` 调整。
+
+链路追踪使用 W3C `traceparent` 在网关、HTTP/Feign 和 RabbitMQ 之间传播。日志格式为 `[服务名,traceId,spanId]`；`dev/docker` 默认全量采样，`prod` 默认 10%。可使用 `TRACING_SAMPLING_PROBABILITY` 和 `ZIPKIN_ENDPOINT` 调整。
 
 Docker Compose 使用具名卷保存真实数据：
 

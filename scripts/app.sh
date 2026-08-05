@@ -12,12 +12,12 @@ FILE_SERVICE="file-service"
 LOG_SERVICE="log-service"
 GATEWAY_SERVICE="gateway-service"
 APPLICATION_SERVICES="$AUTH_SERVICE $SYSTEM_SERVICE $FILE_SERVICE $LOG_SERVICE $GATEWAY_SERVICE"
-MIDDLEWARE_SERVICES="mysql redis rabbitmq nacos"
+MIDDLEWARE_SERVICES="mysql redis rabbitmq nacos zipkin"
 
 usage() {
   cat <<'USAGE'
 Usage:
-  ./scripts/app.sh middleware   Start MySQL, Redis, RabbitMQ and Nacos only
+  ./scripts/app.sh middleware   Start MySQL, Redis, RabbitMQ, Nacos and Zipkin only
   ./scripts/app.sh build        Build all service jars and Docker images
   ./scripts/app.sh start        Build and start all services
   ./scripts/app.sh stop         Stop all compose services

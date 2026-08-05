@@ -7,10 +7,17 @@ spring:
   profiles:
     active: dev
   cloud:
+    openfeign:
+      micrometer:
+        enabled: true
     sentinel:
       eager: true
       log:
         dir: ${SENTINEL_LOG_DIR:./logs/sentinel}
+  rabbitmq:
+    listener:
+      simple:
+        observation-enabled: true
 
 feign:
   sentinel:
@@ -27,6 +34,14 @@ springdoc:
   packages-to-scan: com.system.controller
 
 management:
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+    propagation:
+      type: w3c
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://127.0.0.1:9411/api/v2/spans}
   endpoints:
     web:
       exposure:
@@ -34,3 +49,8 @@ management:
   endpoint:
     health:
       show-details: never
+
+logging:
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
+  include-application-name: false

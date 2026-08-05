@@ -14,8 +14,10 @@ services:
       - file-service
       - log-service
       - nacos
+      - zipkin
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     ports:
       - "9000:9000"
 
@@ -30,8 +32,10 @@ services:
       - system-service
       - redis
       - nacos
+      - zipkin
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     ports:
       - "9101:9101"
 
@@ -47,8 +51,10 @@ services:
       - redis
       - rabbitmq
       - nacos
+      - zipkin
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
     ports:
       - "9201:9201"
 
@@ -64,8 +70,10 @@ services:
       - rabbitmq
       - system-service
       - nacos
+      - zipkin
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
       DB_PWD: 123456
       RABBITMQ_USER: guest
       RABBITMQ_PWD: guest
@@ -87,8 +95,10 @@ services:
       - rabbitmq
       - system-service
       - nacos
+      - zipkin
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      ZIPKIN_ENDPOINT: http://zipkin:9411/api/v2/spans
       DB_PWD: 123456
       RABBITMQ_USER: guest
       RABBITMQ_PWD: guest
@@ -166,6 +176,14 @@ services:
     volumes:
       # Nacos本地数据，使用具名卷。
       - admin_nacos_data:/home/nacos/data
+
+  zipkin:
+    image: openzipkin/zipkin-slim:3.6.1
+    container_name: admin-zipkin
+    restart: unless-stopped
+    ports:
+      # Zipkin 查询界面和 HTTP span 接收端口。
+      - "9411:9411"
 
 volumes:
   admin_app_upload:

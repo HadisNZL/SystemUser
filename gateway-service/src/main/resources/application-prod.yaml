@@ -15,6 +15,14 @@ knife4j:
   gateway:
     enabled: false
 
+management:
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:0.1}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
+
 logging:
   level:
     root: warn

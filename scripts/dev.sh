@@ -24,6 +24,7 @@ usage() {
   cat <<'USAGE'
 Usage:
   ./scripts/dev.sh start     Start middleware and all microservices
+  ./scripts/dev.sh services  Start local Spring Boot services only
   ./scripts/dev.sh stop      Stop all local Spring Boot services
   ./scripts/dev.sh restart   Restart local Spring Boot services
   ./scripts/dev.sh status    Show local service status
@@ -32,6 +33,7 @@ Usage:
 Notes:
   - Middleware still uses Docker Compose.
   - Ports: gateway 9000, auth 9101, system 9201, log 9301, file 9401.
+  - Zipkin UI: http://localhost:9411
 USAGE
 }
 
@@ -285,6 +287,7 @@ wait_for_middleware() {
   wait_for_tcp "RabbitMQ" 5672
   wait_for_tcp "Nacos HTTP" 8848
   wait_for_tcp "Nacos gRPC" 9848
+  wait_for_tcp "Zipkin" 9411
   echo "Waiting a few seconds for Nacos service registry to finish initializing..."
   sleep 8
 }
@@ -293,6 +296,11 @@ start_all() {
   prepare_dirs
   ./scripts/app.sh middleware
   wait_for_middleware
+  start_services
+}
+
+start_services() {
+  prepare_dirs
   echo "Installing shared modules..."
   ./mvnw -q -N install -DskipTests
   ./mvnw -q -pl admin-common,admin-operation-log install -DskipTests
@@ -314,6 +322,9 @@ stop_all() {
 case "${1:-}" in
   start)
     start_all
+    ;;
+  services)
+    start_services
     ;;
   stop)
     stop_all

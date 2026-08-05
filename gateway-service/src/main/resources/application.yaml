@@ -6,6 +6,8 @@ spring:
     name: gateway-service
   profiles:
     active: dev
+  reactor:
+    context-propagation: auto
   cloud:
     sentinel:
       eager: true
@@ -120,6 +122,14 @@ system:
     file-upload-qps: ${SENTINEL_FILE_UPLOAD_QPS:3}
 
 management:
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+    propagation:
+      type: w3c
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://127.0.0.1:9411/api/v2/spans}
   endpoints:
     web:
       exposure:
@@ -127,3 +137,8 @@ management:
   endpoint:
     health:
       show-details: never
+
+logging:
+  pattern:
+    correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "
+  include-application-name: false
