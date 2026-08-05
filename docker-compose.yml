@@ -1,4 +1,4 @@
-# 本地开发编排：网关服务 + 认证服务 + 后端应用 + MySQL + Redis + RabbitMQ + Nacos
+# 本地开发编排：网关、认证、系统、文件、日志服务和中间件。
 # 数据使用 Docker named volume 保存，配置/初始化/备份文件放在项目 docker 目录。
 services:
   gateway-service:
@@ -9,8 +9,10 @@ services:
     container_name: gateway-service
     restart: unless-stopped
     depends_on:
-      - admin-system
       - auth-service
+      - system-service
+      - file-service
+      - log-service
       - nacos
     environment:
       SPRING_PROFILES_ACTIVE: docker
@@ -25,19 +27,20 @@ services:
     container_name: auth-service
     restart: unless-stopped
     depends_on:
-      - admin-system
+      - system-service
+      - redis
       - nacos
     environment:
       SPRING_PROFILES_ACTIVE: docker
     ports:
       - "9101:9101"
 
-  admin-system:
+  system-service:
     build:
-      context: .
+      context: ./system-service
       dockerfile: Dockerfile
-    image: admin-system:latest
-    container_name: admin-system
+    image: system-service:latest
+    container_name: system-service
     restart: unless-stopped
     depends_on:
       - mysql
@@ -46,16 +49,51 @@ services:
       - nacos
     environment:
       SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "9201:9201"
+
+  file-service:
+    build:
+      context: ./file-service
+      dockerfile: Dockerfile
+    image: file-service:latest
+    container_name: file-service
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - rabbitmq
+      - system-service
+      - nacos
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
       DB_PWD: 123456
       RABBITMQ_USER: guest
       RABBITMQ_PWD: guest
-      JWT_SECRET: abc123456abc123456abc123456abc123456
-      JWT_EXPIRE: 7200
     ports:
-      - "8080:8080"
+      - "9401:9401"
     volumes:
-      # 后端上传文件目录，使用具名卷保存。
+      # 文件本体沿用原具名卷，迁移服务不会丢失数据。
       - admin_app_upload:/app/upload
+
+  log-service:
+    build:
+      context: ./log-service
+      dockerfile: Dockerfile
+    image: log-service:latest
+    container_name: log-service
+    restart: unless-stopped
+    depends_on:
+      - mysql
+      - rabbitmq
+      - system-service
+      - nacos
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_PWD: 123456
+      RABBITMQ_USER: guest
+      RABBITMQ_PWD: guest
+    ports:
+      - "9301:9301"
 
   mysql:
     image: mysql:8.0

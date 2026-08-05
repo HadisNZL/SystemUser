@@ -29,14 +29,74 @@ spring:
                   - token
                 maxAge: 3600
           routes:
+            - id: auth-service-docs-route
+              uri: lb://auth-service
+              predicates:
+                - Path=/v3/api-docs/auth
+              filters:
+                - SetPath=/v3/api-docs
+            - id: system-service-docs-route
+              uri: lb://system-service
+              predicates:
+                - Path=/v3/api-docs/system
+              filters:
+                - SetPath=/v3/api-docs
+            - id: file-service-docs-route
+              uri: lb://file-service
+              predicates:
+                - Path=/v3/api-docs/file
+              filters:
+                - SetPath=/v3/api-docs
+            - id: log-service-docs-route
+              uri: lb://log-service
+              predicates:
+                - Path=/v3/api-docs/log
+              filters:
+                - SetPath=/v3/api-docs
             - id: auth-service-route
               uri: lb://auth-service
               predicates:
                 - Path=/auth/**
-            - id: admin-system-route
-              uri: lb://admin-system
+            - id: system-service-route
+              uri: lb://system-service
               predicates:
-                - Path=/sys/**,/captcha,/doc.html,/v3/api-docs/**,/webjars/**,/actuator/health
+                - Path=/system/**
+            - id: file-service-route
+              uri: lb://file-service
+              predicates:
+                - Path=/file/**
+            - id: log-service-route
+              uri: lb://log-service
+              predicates:
+                - Path=/log/**
+
+knife4j:
+  gateway:
+    enabled: true
+    strategy: MANUAL
+    tags-sorter: alpha
+    operations-sorter: alpha
+    routes:
+      - name: 认证服务
+        service-name: auth-service
+        url: /v3/api-docs/auth
+        context-path: /
+        order: 1
+      - name: 系统服务
+        service-name: system-service
+        url: /v3/api-docs/system
+        context-path: /
+        order: 2
+      - name: 文件服务
+        service-name: file-service
+        url: /v3/api-docs/file
+        context-path: /
+        order: 3
+      - name: 日志服务
+        service-name: log-service
+        url: /v3/api-docs/log
+        context-path: /
+        order: 4
 
 jwt:
   secret: abc123456abc123456abc123456abc123456

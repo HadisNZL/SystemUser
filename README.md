@@ -1,35 +1,43 @@
 # Admin System
 
-基于 Spring Boot 3.5.16 的后台管理系统练手项目。当前重点已经从基础 CRUD 演进到企业后台常见能力：用户管理、JWT 登录、Spring Security 鉴权、RBAC 权限模型、Knife4j 接口文档、MyBatis-Plus 持久层能力。
+基于 Spring Boot 3.5.16 的后台管理微服务项目，包含统一网关、认证、系统管理、文件和操作日志服务。
 
 ## 技术栈
 
 - JDK 17
 - Spring Boot 3.5.16
+- Spring Cloud 2025.0.0
+- Spring Cloud Alibaba 2025.0.0.0
 - Spring Security
+- Nacos 注册中心与配置中心
+- OpenFeign 服务调用
+- Springdoc OpenAPI 2.8.17
+- Knife4j Gateway 5.2.1
 - Spring AOP
 - JJWT 0.12.7
 - MyBatis-Plus 3.5.5
 - MySQL 8.x
-- Knife4j Next 5.0.18
-- MapStruct 1.5.5.Final
+- Redis 7
+- RabbitMQ 3
+- Docker Compose
 - Lombok
 
 ## 当前能力
 
-- 用户登录：`POST /sys/login`
+- 用户登录：`POST /auth/login`
 - JWT 签发与校验
 - BCrypt 密码加密与校验
 - Spring Security 无状态认证
 - `@PreAuthorize` 接口级权限控制
 - RBAC 五表权限模型
 - 用户分页查询、新增、修改、逻辑删除、物理删除
+- `system-service` 承接用户、角色、菜单、字典和当前用户资料
+- `file-service` 独立承接文件上传、下载和元数据管理
 - MyBatis-Plus 分页、逻辑删除、乐观锁、自动填充
-- Knife4j / OpenAPI 文档
 - Jakarta Validation 参数校验
 - 统一响应码与全局异常处理
 - DTO / VO / Entity 分层
-- 操作日志注解与 RabbitMQ 异步入库
+- `system-service` 操作日志采集与 `log-service` 异步入库
 - 本地文件上传下载
 - 用户 Excel 导入导出
 - 字典配置管理
@@ -37,27 +45,29 @@
 - Redis 接口限流
 - RabbitMQ 操作日志消息队列
 - Spring Task 定时清理历史操作日志
+- 网关统一聚合 OpenAPI 接口文档
 
 ## 项目结构
 
 ```text
-src/main/java/com/system
-├── common                  通用响应、异常、常量
-├── config                  Spring Security、MyBatis-Plus、跨域、Knife4j、Jackson 配置
-├── config/prop             JWT 配置属性
-├── controller              接口层
-├── convert                 MapStruct 对象转换
-├── dto                     请求入参对象
-├── entity                  数据库实体
-├── filter                  Spring Security JWT Filter
-├── handler                 MyBatis-Plus 自动填充处理器
-├── mapper                  MyBatis Mapper
-├── mq                      RabbitMQ 消息生产与消费
-├── security/handler        401 / 403 安全异常处理
-├── service                 业务接口
-├── service/impl            业务实现
-├── util                    JWT 工具
-└── vo                      响应视图对象
+admin-common/         公共响应、异常和服务间消息模型
+admin-operation-log/ 操作日志采集公共模块
+auth-service/         登录、验证码、JWT、退出登录
+system-service/       用户、角色、菜单、字典和当前用户资料
+file-service/         文件上传、下载和元数据管理
+log-service/          操作日志消费、入库和定时清理
+gateway-service/      统一入口、路由和 JWT 校验
+pom.xml               Maven 聚合父工程
+```
+
+运行时调用关系：
+
+```text
+前端 -> gateway-service:9000
+  |-- /auth/**   -> auth-service:9101 -> OpenFeign -> system-service
+  |-- /system/** -> system-service:9201
+  |-- /file/**   -> file-service:9401 -> OpenFeign -> system-service
+  `-- /log/**    -> log-service:9301  -> OpenFeign -> system-service
 ```
 
 ## 数据库
@@ -120,13 +130,13 @@ sys:menu:remove
 生成密文：
 
 ```bash
-./mvnw -Dtest=PasswordEncoderTests test
+./mvnw -pl auth-service -am -Dtest=PasswordEncoderTests -Dsurefire.failIfNoSpecifiedTests=false test
 ```
 
 生成指定明文的密文：
 
 ```bash
-./mvnw -Dtest=PasswordEncoderTests -DrawPassword=123456 test
+./mvnw -pl auth-service -am -Dtest=PasswordEncoderTests -Dsurefire.failIfNoSpecifiedTests=false -DrawPassword=123456 test
 ```
 
 更新 admin 密码示例：
@@ -141,20 +151,19 @@ BCrypt 每次生成的密文都不同，这是正常现象。只要 `matches("12
 
 ## 启动项目
 
-开发环境默认激活 `dev`：
+开发环境默认激活 `dev`，根工程是聚合工程，不再直接启动单体应用。
 
-```bash
-./mvnw spring-boot:run
-```
-
-开发环境依赖 MySQL、Redis、RabbitMQ，微服务阶段还会用到 Nacos。项目根目录已提供 Docker Compose 编排，也支持把后端应用一起容器化运行：
+开发环境依赖 MySQL、Redis、RabbitMQ 和 Nacos。项目根目录已提供 Docker Compose 编排，也支持把后端应用一起容器化运行：
 
 ```text
-Dockerfile
 docker-compose.yml
+admin-common/
+admin-operation-log/
 auth-service/
+system-service/
+file-service/
+log-service/
 gateway-service/
-src/main/resources/application-docker.yaml
 docker/mysql/conf/my.cnf
 docker/mysql/init/
 docker/mysql/backup/
@@ -172,13 +181,14 @@ docker compose version
 
 ```bash
 docker compose up -d mysql redis rabbitmq nacos
-./mvnw spring-boot:run
 ```
 
 也可以使用脚本：
 
 ```bash
 ./scripts/dev.sh start
+./scripts/dev.sh status
+./scripts/dev.sh restart
 ./scripts/dev.sh stop
 ./scripts/dev.sh logs
 ```
@@ -187,8 +197,6 @@ docker compose up -d mysql redis rabbitmq nacos
 
 ```bash
 ./mvnw clean package -DskipTests
-./mvnw -f auth-service/pom.xml clean package -DskipTests
-./mvnw -f gateway-service/pom.xml clean package -DskipTests
 docker compose up -d --build
 ```
 
@@ -197,6 +205,8 @@ docker compose up -d --build
 ```bash
 ./scripts/app.sh start
 ```
+
+`dev.sh` 会在宿主机启动 Java 服务，`app.sh` 会在 Docker 中启动 Java 服务。两种模式占用相同端口，不要同时运行。
 
 完整 Docker 方式使用 `docker` profile，容器内连接地址使用 Compose 服务名：
 
@@ -212,7 +222,9 @@ Nacos:    nacos:8848
 ```text
 网关入口: http://localhost:9000
 认证服务: http://localhost:9101
-后端接口: http://localhost:8080
+系统服务: http://localhost:9201
+日志服务: http://localhost:9301
+文件服务: http://localhost:9401
 MySQL:    127.0.0.1:3306 root / 123456
 Redis:    127.0.0.1:6379
 RabbitMQ: 127.0.0.1:5672 guest / guest
@@ -231,30 +243,43 @@ Nacos 控制台：
 http://localhost:8848/nacos
 ```
 
-应用启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `admin-system`。
+统一接口文档：
+
+```text
+http://localhost:9000/doc.html
+```
+
+文档按认证、系统、文件和日志服务分组。各业务服务只生成 `/v3/api-docs`，Knife4j 页面由网关统一提供；`prod` 环境默认关闭文档。
+
+Knife4j 首页会提示四个服务分组。通过左上角下拉框切换服务后，左侧再按 Controller 的 `@Tag` 展示业务模块。
+
 认证服务启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `auth-service`。
+系统服务启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `system-service`。
+日志服务启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `log-service`。
+文件服务启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `file-service`。
 网关启动后，可以在 Nacos 控制台的 `服务管理 -> 服务列表` 中看到 `gateway-service`。
 
 网关路由验证：
 
 ```text
-POST http://localhost:9000/sys/login
-GET  http://localhost:9000/sys/user/search_list?status=1&pageNum=1&pageSize=10
+POST http://localhost:9000/auth/login
+GET  http://localhost:9000/system/user/search_list?status=1&pageNum=1&pageSize=10
+GET  http://localhost:9000/system/user/1
+GET  http://localhost:9000/system/demo/ping
+POST http://localhost:9000/file/upload
+GET  http://localhost:9000/file/download/{id}
+GET  http://localhost:9000/log/operation/search_list?pageNum=1&pageSize=10
 ```
 
-这两个请求会先进入 `gateway-service`，再通过 Nacos 服务发现转发到 `admin-system`。
-
-OpenFeign 服务调用验证：
-
-```text
-GET http://localhost:9000/auth/demo/ping
-GET http://localhost:9101/auth/demo/ping
-```
+登录请求进入 `auth-service`，`/system/**` 进入 `system-service`，`/file/**` 进入 `file-service`，`/log/**` 进入 `log-service`。
+`/system/user/search_list` 需要先登录，再带 `Authorization: Bearer ...`。
 
 调用链路：
 
 ```text
-gateway-service -> auth-service -> OpenFeign -> admin-system
+登录：gateway-service -> auth-service -> OpenFeign -> system-service
+gateway-service -> system-service
+gateway-service -> file-service -> OpenFeign -> system-service
 ```
 
 Gateway 访问 auth-service 的方式：
@@ -263,7 +288,10 @@ Gateway 访问 auth-service 的方式：
 1. auth-service 启动后，以服务名 auth-service 注册到 Nacos
 2. gateway-service 配置 /auth/** 路由，uri 使用 lb://auth-service
 3. lb:// 表示通过服务发现和负载均衡找服务，不写死 localhost:9101
-4. 请求 http://localhost:9000/auth/demo/ping 会被转发到 auth-service
+4. 请求 http://localhost:9000/auth/login 会被转发到 auth-service
+5. system-service 启动后，以服务名 system-service 注册到 Nacos
+6. gateway-service 配置 /system/** 路由，uri 使用 lb://system-service
+7. 请求 http://localhost:9000/system/demo/ping 会被转发到 system-service
 ```
 
 网关统一能力：
@@ -281,32 +309,24 @@ Gateway 访问 auth-service 的方式：
 ./scripts/dev.sh logs
 ```
 
-Nacos 配置中心本地开发使用的 Data ID：
+网关配置中心本地开发使用的 Data ID：
 
 ```text
-admin-system-dev.yaml
+gateway-service-dev.yaml
 ```
 
 示例配置：
 
 ```yaml
-system:
-  info:
-    name: admin-system
-    description: Nacos配置中心测试
-    version: 0.0.1-dev
-```
-
-验证接口：
-
-```text
-GET http://localhost:8080/sys/config/info
+spring:
+  main:
+    banner-mode: console
 ```
 
 应用健康检查：
 
 ```text
-http://localhost:8080/actuator/health
+http://localhost:9000/actuator/health
 ```
 
 正常响应示例：
@@ -393,7 +413,7 @@ brew uninstall redis
 ```bash
 docker compose ps
 docker compose logs -f
-docker compose logs -f admin-system
+docker compose logs -f file-service
 docker compose stop
 docker compose start
 docker compose down
@@ -417,19 +437,12 @@ docker compose down
 ./scripts/dev.sh status
 ```
 
-`app.sh` 偏 Docker Compose 部署，`dev.sh` 偏本地开发。`dev.sh start` 会启动 Docker 中间件、本地 `admin-system`、`auth-service` 和 `gateway-service`。
+`app.sh` 偏 Docker Compose 部署，`dev.sh` 偏本地开发。`dev.sh start` 会启动中间件和五个微服务。
 
 切换 profile：
 
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=test
-```
-
-接口文档：
-
-```text
-http://localhost:8080/doc.html
-http://localhost:8080/v3/api-docs
+./mvnw -f system-service/pom.xml spring-boot:run -Dspring-boot.run.profiles=test
 ```
 
 ## 登录与鉴权测试
@@ -437,7 +450,7 @@ http://localhost:8080/v3/api-docs
 先获取验证码：
 
 ```bash
-curl http://localhost:8080/captcha
+curl http://localhost:9000/auth/captcha
 ```
 
 返回的 `data.captchaImage` 可以直接作为图片展示，`data.captchaKey` 登录时回传。
@@ -445,12 +458,12 @@ curl http://localhost:8080/captcha
 登录：
 
 ```bash
-curl -X POST http://localhost:8080/sys/login \
+curl -X POST http://localhost:9000/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username":"admin","password":"123456","captchaKey":"这里替换为captchaKey","captchaCode":"图片里的验证码"}'
 ```
 
-成功后返回的 `data` 是 JWT。
+成功后返回的 `data` 是 JWT。验证码和登录都走 `gateway-service -> auth-service`。
 
 验证码使用 Redis 保存，key 前缀为 `captcha:`，2 分钟过期，校验后立即删除。
 
@@ -461,9 +474,8 @@ curl -X POST http://localhost:8080/sys/login \
 接口限流使用 Redis 计数，key 前缀为 `rate_limit:`，当前限制：
 
 ```text
-/sys/login      每个 IP 60 秒最多 5 次
-/captcha        每个 IP 60 秒最多 10 次
-/sys/file/upload 每个 IP 60 秒最多 20 次
+/auth/login     每个 IP 60 秒最多 5 次
+/auth/captcha   每个 IP 60 秒最多 10 次
 ```
 
 操作日志使用 RabbitMQ 异步入库，交换机、队列、路由键：
@@ -476,7 +488,28 @@ routing:  admin.operation.log
 
 如果 RabbitMQ 未启动，主业务接口不受影响，但操作日志消息发送失败，不会写入 `sys_operation_log`。
 
-操作日志定时清理使用 Spring Task，默认保留 90 天，每天凌晨 3 点执行。配置项：
+当前链路：
+
+```text
+system-service 写操作
+  -> @OperationLog + AOP 采集
+  -> RabbitMQ
+  -> log-service 消费
+  -> sys_operation_log
+```
+
+操作日志查询通过网关访问：
+
+```text
+前端 -> gateway-service -> log-service
+  -> OpenFeign 查询 system-service 中的用户状态和权限
+  -> @PreAuthorize 校验 sys:log:list
+  -> sys_operation_log 分页查询
+```
+
+查询接口支持 `module`、`operation`、`operatorId`、`status`、`startTime`、`endTime` 条件，时间格式为 `yyyy-MM-dd HH:mm:ss`。
+
+操作日志定时清理由 `log-service` 使用 Spring Task 执行，默认保留 90 天，每天凌晨 3 点执行。配置项位于 `log-service`：
 
 ```yaml
 system:
@@ -488,7 +521,7 @@ system:
 访问受保护接口：
 
 ```bash
-curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10" \
+curl "http://localhost:9000/system/user/search_list?status=1&pageNum=1&pageSize=10" \
   -H "Authorization: Bearer 这里替换为登录返回的token"
 ```
 
@@ -498,57 +531,58 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 
 | 接口 | 方法 | 权限 |
 | --- | --- | --- |
-| `/sys/logout` | POST | 登录用户 |
-| `/sys/user/{id}` | GET | `sys:user:detail` |
-| `/sys/user/search_list` | GET | `sys:user:list` |
-| `/sys/user/status` | PUT | `sys:user:status` |
-| `/sys/user/reset-password` | PUT | `sys:user:resetPwd` |
-| `/sys/user/change-password` | PUT | 登录用户 |
-| `/sys/user/{id}/roles` | GET | `sys:user:assignRole` |
-| `/sys/user/{id}/roles` | PUT | `sys:user:assignRole` |
-| `/sys/user/add` | POST | `sys:user:add` |
-| `/sys/user/modify` | POST | `sys:user:edit` |
-| `/sys/user/delete/{id}` | DELETE | `sys:user:remove` |
-| `/sys/user/delete_admin/{id}` | DELETE | `sys:user:physicalDel` |
-| `/sys/user/export` | GET | `sys:user:export` |
-| `/sys/user/import-template` | GET | `sys:user:import` |
-| `/sys/user/import` | POST | `sys:user:import` |
-| `/sys/role/search_list` | GET | `sys:role:list` |
-| `/sys/role/add` | POST | `sys:role:add` |
-| `/sys/role/modify` | POST | `sys:role:edit` |
-| `/sys/role/status` | PUT | `sys:role:status` |
-| `/sys/role/{id}/permissions` | GET | `sys:role:assignPermission` |
-| `/sys/role/{id}/permissions` | PUT | `sys:role:assignPermission` |
-| `/sys/role/delete/{id}` | DELETE | `sys:role:remove` |
-| `/sys/profile` | GET | 登录用户 |
-| `/sys/menu/tree` | GET | `sys:menu:list` |
-| `/sys/menu/current` | GET | 登录用户 |
-| `/sys/menu/add` | POST | `sys:menu:add` |
-| `/sys/menu/modify` | POST | `sys:menu:edit` |
-| `/sys/menu/delete/{id}` | DELETE | `sys:menu:remove` |
-| `/sys/dict/type/search_list` | GET | `sys:dict:type:list` |
-| `/sys/dict/type/add` | POST | `sys:dict:type:add` |
-| `/sys/dict/type/modify` | POST | `sys:dict:type:edit` |
-| `/sys/dict/type/delete/{id}` | DELETE | `sys:dict:type:remove` |
-| `/sys/dict/data/search_list` | GET | `sys:dict:data:list` |
-| `/sys/dict/data/type/{dictType}` | GET | 登录用户 |
-| `/sys/dict/data/add` | POST | `sys:dict:data:add` |
-| `/sys/dict/data/modify` | POST | `sys:dict:data:edit` |
-| `/sys/dict/data/delete/{id}` | DELETE | `sys:dict:data:remove` |
-| `/sys/file/upload` | POST | 登录用户 |
-| `/sys/file/download/{id}` | GET | 登录用户 |
+| `/auth/logout` | POST | 登录用户 |
+| `/system/user/{id}` | GET | `sys:user:detail` |
+| `/system/user/search_list` | GET | `sys:user:list` |
+| `/system/user/status` | PUT | `sys:user:status` |
+| `/system/user/reset-password` | PUT | `sys:user:resetPwd` |
+| `/system/user/change-password` | PUT | 登录用户 |
+| `/system/user/{id}/roles` | GET | `sys:user:assignRole` |
+| `/system/user/{id}/roles` | PUT | `sys:user:assignRole` |
+| `/system/user/add` | POST | `sys:user:add` |
+| `/system/user/modify` | POST | `sys:user:edit` |
+| `/system/user/delete/{id}` | DELETE | `sys:user:remove` |
+| `/system/user/delete_admin/{id}` | DELETE | `sys:user:physicalDel` |
+| `/system/user/export` | GET | `sys:user:export` |
+| `/log/operation/search_list` | GET | `sys:log:list` |
+| `/system/user/import-template` | GET | `sys:user:import` |
+| `/system/user/import` | POST | `sys:user:import` |
+| `/system/role/search_list` | GET | `sys:role:list` |
+| `/system/role/add` | POST | `sys:role:add` |
+| `/system/role/modify` | POST | `sys:role:edit` |
+| `/system/role/status` | PUT | `sys:role:status` |
+| `/system/role/{id}/permissions` | GET | `sys:role:assignPermission` |
+| `/system/role/{id}/permissions` | PUT | `sys:role:assignPermission` |
+| `/system/role/delete/{id}` | DELETE | `sys:role:remove` |
+| `/system/profile` | GET | 登录用户 |
+| `/system/menu/tree` | GET | `sys:menu:list` |
+| `/system/menu/current` | GET | 登录用户 |
+| `/system/menu/add` | POST | `sys:menu:add` |
+| `/system/menu/modify` | POST | `sys:menu:edit` |
+| `/system/menu/delete/{id}` | DELETE | `sys:menu:remove` |
+| `/system/dict/type/search_list` | GET | `sys:dict:type:list` |
+| `/system/dict/type/add` | POST | `sys:dict:type:add` |
+| `/system/dict/type/modify` | POST | `sys:dict:type:edit` |
+| `/system/dict/type/delete/{id}` | DELETE | `sys:dict:type:remove` |
+| `/system/dict/data/search_list` | GET | `sys:dict:data:list` |
+| `/system/dict/data/type/{dictType}` | GET | 登录用户 |
+| `/system/dict/data/add` | POST | `sys:dict:data:add` |
+| `/system/dict/data/modify` | POST | `sys:dict:data:edit` |
+| `/system/dict/data/delete/{id}` | DELETE | `sys:dict:data:remove` |
+| `/file/upload` | POST | 登录用户 |
+| `/file/download/{id}` | GET | 登录用户 |
 
-新增用户使用 `UserAddDTO`，需要传 `password`。查询返回使用 `UserPageVO`，不返回密码。
+用户管理接口位于 `system-service` 的 `/system/user/**`。新增用户使用 `UserAddDTO`，需要传 `password`。查询返回使用 `UserPageVO`，不返回密码。
 
 文件上传使用 `multipart/form-data`，字段名为 `file`。文件元数据保存到 `sys_file`，文件本体默认保存到 `./upload`，最大 10MB。
 
 用户 Excel 导入使用 `multipart/form-data`，字段名为 `file`。模板列为：账号、密码、昵称、手机号、邮箱、状态。状态可填 `1/正常` 或 `0/禁用`，为空默认正常。
 
-字典配置分为字典类型和字典数据。前端下拉框通过 `/sys/dict/data/type/{dictType}` 获取启用的字典数据。
+字典配置分为字典类型和字典数据。前端下拉框通过 `/system/dict/data/type/{dictType}` 获取启用的字典数据。
 
 ## DTO / VO 边界
 
-- `LoginDTO`：登录入参，包含 `username/password/captchaKey/captchaCode`
+- `AuthLoginDTO`：登录入参，包含 `username/password/captchaKey/captchaCode`
 - `UserAddDTO`：新增用户入参，包含 `password`
 - `UserUpdateDTO`：修改用户入参，不直接修改密码
 - `UserStatusDTO`：启用 / 禁用用户入参，只包含 `id/status`
@@ -610,18 +644,22 @@ curl "http://localhost:8080/sys/user/search_list?status=1&pageNum=1&pageSize=10"
 
 当前测试包含：
 
-- `PasswordEncoderTests`：生成并校验 BCrypt 密文
-- `CaptchaControllerTest`：验证码接口响应
-- `LoginControllerTest`：登录接口成功响应、参数校验
-- `SysUserControllerTest`：用户详情响应不暴露敏感字段
+- `auth-service/PasswordEncoderTests`：生成并校验 BCrypt 密文
+- `AuthLoginControllerTest`：认证接口成功响应、参数校验
+- `AuthCaptchaServiceImplTest`：验证码生成和 Redis 写入
+- `AuthLogoutServiceImplTest`：退出登录写入 Token 黑名单
+- `SystemUserControllerTest`：系统服务用户接口响应不暴露敏感字段
 - `SysRoleControllerTest`：角色分页、新增、修改、删除接口响应
-- `SecurityHandlerTest`：未登录 401、无权限 403 返回
-- `RedisRateLimitServiceImplTest`：Redis 接口限流计数与拦截
-- `OperationLogMessageProducerTest`：操作日志消息发送
-- `OperationLogMessageConsumerTest`：操作日志消息消费入库
-- `OperationLogCleanServiceImplTest`：历史操作日志清理
-- `OperationLogCleanTaskTest`：定时清理任务触发
-- `AdminSystemApplicationTests`：Spring Boot 上下文启动
+- `file-service/SysFileControllerTest`：文件上传下载接口
+- `file-service/SysFileServiceImplTest`：文件校验、磁盘存储和元数据保存
+- `admin-operation-log/OperationLogMessageProducerTest`：操作日志消息发送
+- `log-service/OperationLogMessageConsumerTest`：操作日志消息消费入库
+- `log-service/OperationLogCleanServiceImplTest`：历史操作日志清理
+- `log-service/OperationLogCleanTaskTest`：定时清理任务触发
+- `log-service/OperationLogControllerTest`：操作日志分页接口与权限校验
+- `log-service/OperationLogQueryServiceImplTest`：操作日志条件查询与分页转换
+- `log-service/GatewayForwardAuthenticationFilterTest`：网关身份恢复与用户权限加载
+- 各微服务 ApplicationTests：Spring Boot 上下文启动
 
 ## 常见问题
 
@@ -639,7 +677,7 @@ WHERE username = 'admin';
 
 ### 访问接口跳转到 /login
 
-说明 Spring Security 默认登录页还在生效。当前项目已经通过 `SecurityConfig` 关闭了 `formLogin` 和 `httpBasic`，并放行 `/sys/login`。
+说明 Spring Security 默认登录页还在生效。当前项目已经通过 `SecurityConfig` 关闭了 `formLogin` 和 `httpBasic`，并放行登录相关入口。
 
 ### 访问接口返回 401
 
@@ -648,6 +686,10 @@ WHERE username = 'admin';
 ```text
 Authorization: Bearer token
 ```
+
+业务接口应通过 `http://localhost:9000` 访问。直接请求 `9201/9301/9401` 不会携带网关生成的可信身份头，受保护接口会返回 401。
+
+Knife4j 中可以使用全局 Header `Authorization: Bearer token`，也可以在 `bearerAuth` 授权框只填写 token；不要同时配置，也不要形成 `Bearer Bearer token`。
 
 ### 访问接口返回 403
 
@@ -672,5 +714,5 @@ com.system.mapper.SysPermissionMapper
 - `00-数据库表结构文档.md`：数据库 DDL、RBAC 表关系、初始化数据
 - `01-项目开发说明.md`：认证鉴权流程、开发约定、测试流程、排错清单
 - `02-企业级后端学习规划.md`：阶段目标和项目进度
-- `03-单体部署运维手册.md`：部署、日志、端口、健康检查和备份恢复
+- `03-微服务部署运维手册.md`：微服务部署、日志、健康检查和备份恢复
 - `04-微服务拆分设计.md`：单体平滑演进到微服务的服务边界和拆分顺序

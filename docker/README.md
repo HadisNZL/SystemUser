@@ -38,8 +38,6 @@ http://localhost:8848/nacos
 
 ```bash
 ./mvnw clean package -DskipTests
-./mvnw -f auth-service/pom.xml clean package -DskipTests
-./mvnw -f gateway-service/pom.xml clean package -DskipTests
 docker compose up -d --build
 ./scripts/app.sh start
 ```
@@ -50,12 +48,16 @@ docker compose up -d --build
 http://localhost:9000
 ```
 
-OpenFeign演示接口：
+服务路由：
 
 ```text
-http://localhost:9000/auth/demo/ping
-http://localhost:9101/auth/demo/ping
+/auth/**   -> auth-service
+/system/** -> system-service
+/file/**   -> file-service
+/log/**    -> log-service
 ```
+
+`admin_app_upload` 现在挂载到 `file-service`，原容器文件数据继续保留。
 
 停止：
 

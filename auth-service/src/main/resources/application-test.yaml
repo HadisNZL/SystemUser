@@ -3,6 +3,14 @@ spring:
     nacos:
       discovery:
         enabled: false
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+
+jwt:
+  secret: abc123456abc123456abc123456abc123456
+  expire: 7200
 
 logging:
   level:

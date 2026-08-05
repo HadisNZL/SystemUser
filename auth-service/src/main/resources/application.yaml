@@ -7,6 +7,15 @@ spring:
   profiles:
     active: dev
 
+jwt:
+  secret: abc123456abc123456abc123456abc123456
+  expire: 7200
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan: com.system.auth.controller
+
 management:
   endpoints:
     web:

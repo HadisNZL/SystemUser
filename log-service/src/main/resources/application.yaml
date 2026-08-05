@@ -1,0 +1,27 @@
+server:
+  port: 9301
+
+spring:
+  application:
+    name: log-service
+  profiles:
+    active: dev
+
+system:
+  operation-log:
+    retention-days: 90
+    clean-cron: "0 0 3 * * ?"
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan: com.system.controller
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

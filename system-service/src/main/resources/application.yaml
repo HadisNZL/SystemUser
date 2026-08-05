@@ -1,0 +1,31 @@
+server:
+  port: 9201
+
+spring:
+  application:
+    name: system-service
+  profiles:
+    active: dev
+
+system:
+  info:
+    name: admin-system
+    description: 企业级后台管理系统
+    version: 0.0.1
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan:
+    - com.system.controller
+    - com.system.system.controller
+  paths-to-exclude: /internal/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never

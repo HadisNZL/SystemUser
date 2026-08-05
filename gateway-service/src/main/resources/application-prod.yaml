@@ -11,6 +11,10 @@ spring:
         file-extension: yaml
         group: DEFAULT_GROUP
 
+knife4j:
+  gateway:
+    enabled: false
+
 logging:
   level:
     root: warn

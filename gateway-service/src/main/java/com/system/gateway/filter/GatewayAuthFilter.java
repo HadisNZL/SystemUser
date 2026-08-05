@@ -1,8 +1,9 @@
 package com.system.gateway.filter;
 
-import com.system.gateway.util.JwtUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.system.gateway.service.TokenBlacklistService;
+import com.system.gateway.util.JwtUtil;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -29,21 +30,25 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
 
     private static final AntPathMatcher PATH_MATCHER = new AntPathMatcher();
     private static final List<String> WHITE_LIST = List.of(
-            "/sys/login",
-            "/captcha",
-            "/auth/demo/**",
+            "/auth/captcha",
+            "/auth/login",
+            "/system/demo/**",
+            "/actuator/health",
             "/doc.html",
-            "/v3/api-docs/**",
             "/webjars/**",
-            "/actuator/health"
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/knife4j/**"
     );
 
     private final JwtUtil jwtUtil;
     private final ObjectMapper objectMapper;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public GatewayAuthFilter(JwtUtil jwtUtil, ObjectMapper objectMapper) {
+    public GatewayAuthFilter(JwtUtil jwtUtil, ObjectMapper objectMapper, TokenBlacklistService tokenBlacklistService) {
         this.jwtUtil = jwtUtil;
         this.objectMapper = objectMapper;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
@@ -63,12 +68,18 @@ public class GatewayAuthFilter implements GlobalFilter, Ordered {
             return unauthorized(exchange, "登录令牌无效，请重新登录");
         }
 
-        Long userId = jwtUtil.getUserId(token);
-        ServerHttpRequest mutatedRequest = request.mutate()
-                .header("X-Gateway-Forwarded", "true")
-                .header("X-User-Id", userId.toString())
-                .build();
-        return chain.filter(exchange.mutate().request(mutatedRequest).build());
+        return tokenBlacklistService.isBlacklisted(token)
+                .flatMap(blacklisted -> {
+                    if (Boolean.TRUE.equals(blacklisted)) {
+                        return unauthorized(exchange, "登录已退出，请重新登录");
+                    }
+                    Long userId = jwtUtil.getUserId(token);
+                    ServerHttpRequest mutatedRequest = request.mutate()
+                            .header("X-Gateway-Forwarded", "true")
+                            .header("X-User-Id", userId.toString())
+                            .build();
+                    return chain.filter(exchange.mutate().request(mutatedRequest).build());
+                });
     }
 
     @Override

@@ -1,0 +1,30 @@
+server:
+  port: 9401
+
+spring:
+  application:
+    name: file-service
+  profiles:
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+
+file:
+  storage:
+    upload-path: ./upload
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan: com.system.controller
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
