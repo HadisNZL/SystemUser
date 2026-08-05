@@ -9,10 +9,12 @@ import com.system.auth.util.JwtUtil;
 import com.system.auth.vo.LoginUserVO;
 import com.system.common.BusinessException;
 import com.system.common.Result;
+import com.system.common.ResultCode;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -43,8 +45,23 @@ class AuthLoginServiceImplTest {
         assertThrows(BusinessException.class, () -> service.login(buildLoginDTO("123456")));
     }
 
+    @Test
+    void loginShouldPreserveServiceUnavailableResult() {
+        SystemServiceAuthClient client = (username, internalSource) -> Result.fail(ResultCode.SERVICE_UNAVAILABLE);
+        AuthLoginServiceImpl service = buildService(client);
+
+        BusinessException exception = assertThrows(
+                BusinessException.class, () -> service.login(buildLoginDTO("123456")));
+
+        assertEquals(ResultCode.SERVICE_UNAVAILABLE.getCode(), exception.getCode());
+    }
+
     private AuthLoginServiceImpl buildService(String rawPassword, Integer status) {
         SystemServiceAuthClient client = (username, internalSource) -> Result.success(buildLoginUser(rawPassword, status));
+        return buildService(client);
+    }
+
+    private AuthLoginServiceImpl buildService(SystemServiceAuthClient client) {
         CaptchaValidateService captchaValidateService = (captchaKey, captchaCode) -> {
         };
         JwtProperties jwtProperties = new JwtProperties();

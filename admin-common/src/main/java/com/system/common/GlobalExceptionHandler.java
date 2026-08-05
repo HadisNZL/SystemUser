@@ -26,8 +26,9 @@ public class GlobalExceptionHandler {
     // 捕获自定义业务异常
     @ExceptionHandler(BusinessException.class)
     public Result<?> businessExceptionHandler(BusinessException e, HttpServletResponse response) {
-        if (ResultCode.RATE_LIMIT.getCode().equals(e.getCode())) {
-            response.setStatus(ResultCode.RATE_LIMIT.getCode());
+        if (ResultCode.RATE_LIMIT.getCode().equals(e.getCode())
+                || ResultCode.SERVICE_UNAVAILABLE.getCode().equals(e.getCode())) {
+            response.setStatus(e.getCode());
         }
         return Result.fail(e.getCode(), e.getMessage());
     }

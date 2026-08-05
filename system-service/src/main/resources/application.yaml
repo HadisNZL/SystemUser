@@ -6,6 +6,11 @@ spring:
     name: system-service
   profiles:
     active: dev
+  cloud:
+    sentinel:
+      eager: true
+      log:
+        dir: ${SENTINEL_LOG_DIR:./logs/sentinel}
 
 system:
   info:
@@ -25,7 +30,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,sentinel
   endpoint:
     health:
       show-details: never

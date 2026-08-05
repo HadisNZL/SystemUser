@@ -10,7 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 /**
  * 调用system-service内部授权接口。
  */
-@FeignClient(contextId = "fileSystemAuthorizationClient", name = "system-service", path = "/internal/authorization")
+@FeignClient(contextId = "fileSystemAuthorizationClient", name = "system-service", path = "/internal/authorization",
+        fallbackFactory = SystemAuthorizationClientFallbackFactory.class)
 public interface SystemAuthorizationClient {
 
     String INTERNAL_SOURCE_HEADER = "X-Internal-Source";

@@ -7,6 +7,18 @@ spring:
   profiles:
     active: dev
   cloud:
+    sentinel:
+      eager: true
+      log:
+        dir: ${SENTINEL_LOG_DIR:./logs/sentinel}
+      filter:
+        enabled: false
+      scg:
+        fallback:
+          mode: response
+          response-status: 429
+          content-type: application/json;charset=UTF-8
+          response-body: '{"code":429,"msg":"请求过于频繁，请稍后再试","isSuccess":false,"data":null}'
     gateway:
       server:
         webflux:
@@ -101,11 +113,17 @@ knife4j:
 jwt:
   secret: abc123456abc123456abc123456abc123456
 
+system:
+  sentinel:
+    login-qps: ${SENTINEL_LOGIN_QPS:5}
+    user-search-qps: ${SENTINEL_USER_SEARCH_QPS:20}
+    file-upload-qps: ${SENTINEL_FILE_UPLOAD_QPS:3}
+
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,sentinel
   endpoint:
     health:
       show-details: never

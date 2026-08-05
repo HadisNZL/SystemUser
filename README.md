@@ -8,6 +8,7 @@
 - Spring Boot 3.5.16
 - Spring Cloud 2025.0.0
 - Spring Cloud Alibaba 2025.0.0.0
+- Sentinel 1.8.9
 - Spring Security
 - Nacos 注册中心与配置中心
 - OpenFeign 服务调用
@@ -46,6 +47,8 @@
 - RabbitMQ 操作日志消息队列
 - Spring Task 定时清理历史操作日志
 - 网关统一聚合 OpenAPI 接口文档
+- Sentinel 核心接口 QPS 限流
+- OpenFeign 调用降级与网关异常统一响应
 
 ## 项目结构
 
@@ -335,6 +338,16 @@ http://localhost:9000/actuator/health
 {"status":"UP"}
 ```
 
+Sentinel 已接入五个应用服务，网关默认保护以下接口：
+
+```text
+POST /auth/login                    5 QPS
+GET  /system/user/search_list      20 QPS
+POST /file/upload                   3 QPS
+```
+
+阈值可通过 `SENTINEL_LOGIN_QPS`、`SENTINEL_USER_SEARCH_QPS`、`SENTINEL_FILE_UPLOAD_QPS` 调整。限流返回 HTTP 429；Feign 下游不可用或网关无法找到服务实例时返回 HTTP 503。Sentinel 状态可通过各服务 `/actuator/sentinel` 查看，日志目录可用 `SENTINEL_LOG_DIR` 调整。
+
 Docker Compose 使用具名卷保存真实数据：
 
 ```text
@@ -618,7 +631,9 @@ curl "http://localhost:9000/system/user/search_list?status=1&pageNum=1&pageSize=
 400 参数错误
 401 未登录或登录已失效
 403 没有访问该接口的权限
+429 请求过于频繁
 500 系统异常
+503 服务暂时不可用
 10001+ 业务错误
 ```
 
@@ -659,6 +674,8 @@ curl "http://localhost:9000/system/user/search_list?status=1&pageNum=1&pageSize=
 - `log-service/OperationLogControllerTest`：操作日志分页接口与权限校验
 - `log-service/OperationLogQueryServiceImplTest`：操作日志条件查询与分页转换
 - `log-service/GatewayForwardAuthenticationFilterTest`：网关身份恢复与用户权限加载
+- `GatewaySentinelConfigTest`：网关核心接口限流规则
+- `GatewayExceptionHandlerTest`：网关 503 统一响应
 - 各微服务 ApplicationTests：Spring Boot 上下文启动
 
 ## 常见问题

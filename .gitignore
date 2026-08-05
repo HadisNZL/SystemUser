@@ -4,6 +4,7 @@ upload/
 dump.rdb
 .run/
 logs/dev/
+**/logs/sentinel/
 docker/mysql/backup/*.sql
 docker/mysql/backup/*.dump
 docker/mysql/backup/*.gz

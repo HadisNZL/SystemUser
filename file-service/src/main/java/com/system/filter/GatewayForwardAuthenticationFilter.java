@@ -2,6 +2,7 @@ package com.system.filter;
 
 import com.system.client.SystemAuthorizationClient;
 import com.system.common.Result;
+import com.system.common.ResultCode;
 import com.system.vo.UserAuthorizationVO;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -38,27 +39,32 @@ public class GatewayForwardAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            restoreAuthentication(request);
-            filterChain.doFilter(request, response);
+            if (restoreAuthentication(request, response)) {
+                filterChain.doFilter(request, response);
+            }
         } finally {
             SecurityContextHolder.clearContext();
         }
     }
 
-    private void restoreAuthentication(HttpServletRequest request) {
+    private boolean restoreAuthentication(HttpServletRequest request, HttpServletResponse response) throws IOException {
         if (!"true".equalsIgnoreCase(request.getHeader(GATEWAY_FORWARDED_HEADER))) {
-            return;
+            return true;
         }
         String userId = request.getHeader(USER_ID_HEADER);
         if (userId == null || userId.isBlank()) {
-            return;
+            return true;
         }
         try {
             Result<UserAuthorizationVO> result = systemAuthorizationClient.getUserAuthorization(
                     Long.valueOf(userId), SystemAuthorizationClient.INTERNAL_SOURCE_VALUE);
+            if (result != null && ResultCode.SERVICE_UNAVAILABLE.getCode().equals(result.getCode())) {
+                writeServiceUnavailable(response);
+                return false;
+            }
             if (result == null || !Boolean.TRUE.equals(result.getIsSuccess()) || result.getData() == null
                     || USER_DISABLE.equals(result.getData().getStatus())) {
-                return;
+                return true;
             }
             List<SimpleGrantedAuthority> authorities = result.getData().getPermissionKeys() == null
                     ? List.of()
@@ -67,8 +73,21 @@ public class GatewayForwardAuthenticationFilter extends OncePerRequestFilter {
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            return true;
+        } catch (NumberFormatException ignored) {
+            SecurityContextHolder.clearContext();
+            return true;
         } catch (RuntimeException ignored) {
             SecurityContextHolder.clearContext();
+            writeServiceUnavailable(response);
+            return false;
         }
+    }
+
+    private void writeServiceUnavailable(HttpServletResponse response) throws IOException {
+        response.setStatus(ResultCode.SERVICE_UNAVAILABLE.getCode());
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(
+                "{\"code\":503,\"msg\":\"服务暂时不可用，请稍后再试\",\"isSuccess\":false,\"data\":null}");
     }
 }

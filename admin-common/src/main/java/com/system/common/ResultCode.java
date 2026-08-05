@@ -11,6 +11,7 @@ public enum ResultCode {
     FORBIDDEN(403, "没有访问该接口的权限"),
     RATE_LIMIT(429, "请求过于频繁，请稍后再试"),
     SYSTEM_ERROR(500, "系统异常，请联系管理员"),
+    SERVICE_UNAVAILABLE(503, "服务暂时不可用，请稍后再试"),
     BUSINESS_ERROR(10001, "业务处理失败"),
     LOGIN_FAIL(10002, "账号或密码错误"),
     USER_DISABLED(10003, "账号已被禁用"),

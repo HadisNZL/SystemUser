@@ -50,6 +50,9 @@ public class AuthLoginServiceImpl implements AuthLoginService {
 
     private LoginUserVO getLoginUser(String username) {
         Result<LoginUserVO> result = systemServiceAuthClient.getLoginUser(username, SystemServiceAuthClient.INTERNAL_SOURCE_VALUE);
+        if (result != null && ResultCode.SERVICE_UNAVAILABLE.getCode().equals(result.getCode())) {
+            throw new BusinessException(ResultCode.SERVICE_UNAVAILABLE);
+        }
         if (result == null || !Boolean.TRUE.equals(result.getIsSuccess()) || result.getData() == null) {
             throw new BusinessException(ResultCode.LOGIN_FAIL);
         }

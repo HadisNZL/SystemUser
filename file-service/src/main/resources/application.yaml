@@ -6,10 +6,19 @@ spring:
     name: file-service
   profiles:
     active: dev
+  cloud:
+    sentinel:
+      eager: true
+      log:
+        dir: ${SENTINEL_LOG_DIR:./logs/sentinel}
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 11MB
+
+feign:
+  sentinel:
+    enabled: true
 
 file:
   storage:
@@ -24,7 +33,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,sentinel
   endpoint:
     health:
       show-details: never

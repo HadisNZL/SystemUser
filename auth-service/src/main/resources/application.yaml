@@ -6,6 +6,15 @@ spring:
     name: auth-service
   profiles:
     active: dev
+  cloud:
+    sentinel:
+      eager: true
+      log:
+        dir: ${SENTINEL_LOG_DIR:./logs/sentinel}
+
+feign:
+  sentinel:
+    enabled: true
 
 jwt:
   secret: abc123456abc123456abc123456abc123456
@@ -20,7 +29,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,sentinel
   endpoint:
     health:
       show-details: never

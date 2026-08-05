@@ -4,6 +4,7 @@ import com.system.common.BusinessException;
 import com.system.common.Result;
 import com.system.common.ResultCode;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -20,7 +21,11 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
-    public Result<?> businessExceptionHandler(BusinessException e) {
+    public Result<?> businessExceptionHandler(BusinessException e, HttpServletResponse response) {
+        if (ResultCode.RATE_LIMIT.getCode().equals(e.getCode())
+                || ResultCode.SERVICE_UNAVAILABLE.getCode().equals(e.getCode())) {
+            response.setStatus(e.getCode());
+        }
         return Result.fail(e.getCode(), e.getMessage());
     }
 
